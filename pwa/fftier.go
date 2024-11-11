@@ -81,19 +81,19 @@ func (t *tier) formatGetter(rulesFormat string) {
 
 }
 
-func initObj() tier {
+func initObj(playerPosition string, rulesFormat int) *tier {
 	obj := tier{0, "", make(map[int][]string), time.Now()}
-	playerPosition := strings.ToUpper(os.Args[1])
-	rulesFormat := strings.ToUpper(os.Args[2])
 	obj.getUrlBasedOnPos(playerPosition)
 	obj.formatGetter(rulesFormat)
 	obj.GetUrl()
-	return obj
+	return &obj
 }
 
 func main() {
+	playerPosition := strings.ToUpper(os.Args[1])
+	rulesFormat := strings.ToUpper(os.Args[2])
 
-	obj := initObj()
+	obj := initObj(playerPosition, rulesFormat)
 	resp, err := http.Get(obj.url)
 	if err != nil {
 		log.Fatalln(err)
@@ -134,12 +134,12 @@ func main() {
 		for _, t := range testing {
 			st := findPlayerRe.FindString(t)
 			if st != "" {
-				fmt.Println(tier, st)
+				//fmt.Println(tier, st)
 				obj.players[tier] = append(obj.players[tier], st)
 			}
 		}
 	}
 
-	fmt.Println(obj)
+	fmt.Println(obj.players)
 	fmt.Println(obj.date)
 }
