@@ -39,6 +39,7 @@ func (m mapOfUrls) getLists() {
 type mapOfMaps map[string]map[int]string
 
 func (m mapOfMaps) makeRequests(position, url string) {
+	fmt.Println("Making requests")
 	resp, err := http.Get(url)
 	if err != nil {
 		fmt.Printf("Error: %s", err)
@@ -55,15 +56,21 @@ func (m mapOfMaps) makeRequests(position, url string) {
 		theMap := map[int]string{idx: tier}
 		m[position] = theMap
 	}
-
 }
+
+// Neeed to go through each url, grab the data, attach to the proper map section.
+// want to go through everything concurrently
+// use waitgroup?
 
 func main() {
 	mUrls := make(mapOfUrls)
 	mUrls.getLists()
+	fmt.Printf("list of urls?: %s", mUrls)
 	m := make(mapOfMaps)
-	for k, v := range mUrls {
-		m.makeRequests(k, v)
+	for k, sliceUrls := range mUrls {
+		for _, u := range sliceUrls {
+			m.makeRequests(k, u)
+		}
 	}
 	fmt.Println(m)
 }
