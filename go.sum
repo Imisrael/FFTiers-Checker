@@ -7,6 +7,8 @@ github.com/mattn/go-sqlite3 v1.14.24 h1:tpSp2G2KyMnnQu99ngJ47EIkWVmliIizyZBfPrBW
 github.com/mattn/go-sqlite3 v1.14.24/go.mod h1:Uh1q+B4BYcTPb+yiD3kU8Ct7aC0hY9fxUwlHK0RXw+Y=
 github.com/maxence-charriere/go-app/v10 v10.0.8 h1:ZbHTaIN1nMTzMvWmx5/wAMioDxnftNmkYfcX3O4lleE=
 github.com/maxence-charriere/go-app/v10 v10.0.8/go.mod h1:VyjGLeTiK6hfAQ/Q5ZVcLbuJ9vOZhKcewSC/ZwI+6WM=
+github.com/maxence-charriere/go-app/v10 v10.0.9 h1:3gcPG4dE6UEGUc7tij13fE2qcB5UCYc7VQUuWtphQAk=
+github.com/maxence-charriere/go-app/v10 v10.0.9/go.mod h1:VyjGLeTiK6hfAQ/Q5ZVcLbuJ9vOZhKcewSC/ZwI+6WM=
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/spf13/cobra v1.8.1 h1:e5/vxKd/rZsfSJMUX1agtjeTDf+qv1/JdBF8gg5k9ZM=
 github.com/spf13/cobra v1.8.1/go.mod h1:wHxEcudfqmLYa8iTfL+OuZPbBZkmvliBWKIezN3kD9Y=

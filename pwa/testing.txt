@@ -1,0 +1,139 @@
+01 Josh Allen, Jalen Hurts, Joe Burrow, Lamar Jackson
+2 Jayden Daniels, Baker Mayfield
+3 Kyler Murray, Sam Darnold, Jordan Love, Brock Purdy
+4 Jared Goff, Bo Nix, Anthony Richardson, Tua Tagovailoa
+5 Matthew Stafford, Aaron Rodgers
+6 Justin Herbert, Caleb Williams, Drake Maye, Patrick Mahomes II
+7 Cooper Rush, C.J. Stroud, Russell Wilson
+8 Geno Smith, Bryce Young, Michael Penix Jr.
+01 Green Bay Packers, Atlanta Falcons, Minnesota Vikings, Buffalo Bills, Cincinnati Bengals
+2 Arizona Cardinals, Kansas City Chiefs, Indianapolis Colts, Detroit Lions
+3 Denver Broncos, Philadelphia Eagles, Los Angeles Chargers
+4 Baltimore Ravens, Houston Texans, Tampa Bay Buccaneers
+5 Tennessee Titans, San Francisco 49ers, Las Vegas Raiders, Jacksonville Jaguars, Dallas Cowboys
+01 Jahmyr Gibbs, Saquon Barkley, Josh Jacobs, Bijan Robinson, James Conner
+2 Derrick Henry, De'Von Achane, Kyren Williams, Chase Brown
+3 Chuba Hubbard, Jonathan Taylor, James Cook
+4 Joe Mixon, Rico Dowdle, Isaac Guerendo, Bucky Irving, Aaron Jones Sr.
+5 Brian Robinson Jr., Tony Pollard, Jerome Ford, Zach Charbonnet, Breece Hall
+6 Rachaad White, D'Andre Swift, Isiah Pacheco, Rhamondre Stevenson, Tyrone Tracy Jr.
+7 Kendre Miller, Tank Bigsby, Najee Harris, Travis Etienne Jr.
+8 Gus Edwards, Jaylen Warren, Tyler Allgeier, Tyjae Spears, Javonte Williams
+9 Kimani Vidal, Alexander Mattison, Justice Hill, Kareem Hunt
+01 Ja'Marr Chase, Puka Nacua, Justin Jefferson, Mike Evans, Nico Collins, CeeDee Lamb
+2 Amon-Ra St. Brown, A.J. Brown, Davante Adams, Tee Higgins, Tyreek Hill, Brian Thomas Jr.
+3 Courtland Sutton, Drake London, Malik Nabers, Cooper Kupp, Terry McLaurin
+4 DJ Moore, Jauan Jennings, Garrett Wilson
+5 Ladd McConkey, Jaxon Smith-Njigba, Calvin Ridley, Jordan Addison, DK Metcalf, Zay Flowers, DeVonta Smith
+6 Khalil Shakir, Jakobi Meyers, Jerry Jeudy, Marvin Harrison Jr.
+7 Jayden Reed, Darnell Mooney, Jameson Williams, Keenan Allen, Deebo Samuel Sr.
+8 Adam Thielen
+9 DeAndre Hopkins, Josh Downs, Christian Watson, Xavier Worthy, Amari Cooper, Rome Odunze, Romeo Doubs
+10 Tank Dell, Jalen McMillan, Rashod Bateman, Jalen Coker, Michael Pittman Jr.
+11 Quentin Johnston, Keon Coleman, Marquez Valdes-Scantling, Tim Patrick, Nick Westbrook-Ikhine, Elijah Moore, DeMario Douglas
+12 Joshua Palmer, Michael Wilson, Brandin Cooks, Tre Tucker
+01 Brock Bowers, Trey McBride, George Kittle
+2 Jonnu Smith, Sam LaPorta
+3 Mark Andrews, Travis Kelce, T.J. Hockenson
+4 Tucker Kraft, Pat Freiermuth, Brenton Strange, Hunter Henry
+5 Jake Ferguson, Dalton Kincaid, Cade Otton
+6 Dalton Schultz, Kyle Pitts, Juwan Johnson, Stone Smartt
+7 Cole Kmet, Chig Okonkwo, Noah Gray, Mike Gesicki
+8 Grant Calcaterra
+01 CeeDee Lamb, Mike Evans, Aaron Jones Sr., Nico Collins
+2 Brian Robinson Jr., Tony Pollard, Jerome Ford, A.J. Brown, Amon-Ra St. Brown, Breece Hall
+3 Zach Charbonnet, Davante Adams, Tee Higgins, Rachaad White, Tyreek Hill, D'Andre Swift, Brian Thomas Jr.
+4 Courtland Sutton, Rhamondre Stevenson, Drake London, Malik Nabers, Isiah Pacheco, Cooper Kupp, Terry McLaurin
+5 Tyrone Tracy Jr., Jauan Jennings, DJ Moore, Kendre Miller, Brock Bowers, Garrett Wilson, Trey McBride, Tank Bigsby
+6 George Kittle, Ladd McConkey, Jaxon Smith-Njigba
+7 Calvin Ridley, Jordan Addison, DK Metcalf, Zay Flowers, Najee Harris, DeVonta Smith
+8 Travis Etienne Jr., Jerry Jeudy, Khalil Shakir, Jakobi Meyers, Marvin Harrison Jr.
+9 Jayden Reed, Jameson Williams, Darnell Mooney
+10 Keenan Allen, Deebo Samuel Sr., Jonnu Smith, Gus Edwards, Adam Thielen, Sam LaPorta
+11 DeAndre Hopkins
+12 Mark Andrews, Josh Downs, Christian Watson, Xavier Worthy, Amari Cooper, Jaylen Warren, Travis Kelce, Rome Odunze, Romeo Doubs
+13 Tank Dell, Jalen McMillan, Tyjae Spears, Tyler Allgeier, Rashod Bateman, Javonte Williams, Jalen Coker, Michael Pittman Jr.
+14 T.J. Hockenson, Keon Coleman, Quentin Johnston
+01 Jahmyr Gibbs, Saquon Barkley, Bijan Robinson, Josh Jacobs, James Conner
+2 Chase Brown, De'Von Achane, Derrick Henry
+3 Kyren Williams, Chuba Hubbard, James Cook
+4 Joe Mixon, Rico Dowdle, Jonathan Taylor, Bucky Irving, Isaac Guerendo, Aaron Jones Sr.
+5 Zach Charbonnet, Brian Robinson Jr., Jerome Ford, Breece Hall, Tony Pollard, Rachaad White
+6 D'Andre Swift, Rhamondre Stevenson, Tyrone Tracy Jr., Kendre Miller, Isiah Pacheco
+7 Travis Etienne Jr., Najee Harris, Tank Bigsby, Jaylen Warren
+8 Tyjae Spears, Gus Edwards, Javonte Williams, Tyler Allgeier
+9 Justice Hill, Kimani Vidal, Alexander Mattison, Ameer Abdullah
+01 Ja'Marr Chase, Puka Nacua, Justin Jefferson, CeeDee Lamb, Nico Collins, Mike Evans, Amon-Ra St. Brown
+2 Davante Adams, A.J. Brown, Tee Higgins, Tyreek Hill, Brian Thomas Jr.
+3 Courtland Sutton, Drake London, Malik Nabers, Terry McLaurin, Cooper Kupp
+4 Jaxon Smith-Njigba, Jauan Jennings, Garrett Wilson, Ladd McConkey, DJ Moore
+5 Zay Flowers, Jordan Addison, DeVonta Smith, Jakobi Meyers, Calvin Ridley, Khalil Shakir, DK Metcalf
+6 Jerry Jeudy, Marvin Harrison Jr., Keenan Allen, Adam Thielen, Jayden Reed, Darnell Mooney, Jameson Williams
+7 Josh Downs, DeAndre Hopkins, Deebo Samuel Sr., Romeo Doubs, Rome Odunze
+8 Xavier Worthy, Michael Pittman Jr., Jalen McMillan, Amari Cooper, Christian Watson, Tank Dell, Rashod Bateman, Jalen Coker
+9 Quentin Johnston, Elijah Moore, DeMario Douglas, Tim Patrick, Keon Coleman, Nick Westbrook-Ikhine
+10 Joshua Palmer, Marquez Valdes-Scantling, Michael Wilson, Ray-Ray McCloud III, Wan'Dale Robinson
+01 Trey McBride, Brock Bowers, George Kittle
+2 Jonnu Smith, Sam LaPorta, T.J. Hockenson, Travis Kelce
+3 Mark Andrews, Brenton Strange, Tucker Kraft, Pat Freiermuth, Hunter Henry
+4 Jake Ferguson, Dalton Kincaid, Cade Otton
+5 Dalton Schultz, Kyle Pitts, Stone Smartt, Juwan Johnson
+6 Chig Okonkwo, Cole Kmet, Noah Gray, Mike Gesicki
+7 Grant Calcaterra, Isaiah Likely
+01 Joe Mixon, Rico Dowdle, Davante Adams, Jonathan Taylor, Bucky Irving
+2 Tee Higgins, Isaac Guerendo, Tyreek Hill, Brian Thomas Jr., Aaron Jones Sr.
+3 Trey McBride, Courtland Sutton
+4 Drake London, Zach Charbonnet, Jerome Ford, Terry McLaurin, Brock Bowers, Brian Robinson Jr., Malik Nabers, Cooper Kupp, Breece Hall, Tony Pollard
+5 Jaxon Smith-Njigba, Jauan Jennings, Ladd McConkey, Garrett Wilson
+6 DJ Moore, Rachaad White, George Kittle, Zay Flowers
+7 Jordan Addison, DeVonta Smith, D'Andre Swift, Jakobi Meyers, Rhamondre Stevenson
+8 Calvin Ridley, Jonnu Smith, Kendre Miller, Tyrone Tracy Jr., Jerry Jeudy, Khalil Shakir, Isiah Pacheco, DK Metcalf
+9 Marvin Harrison Jr.
+10 Keenan Allen, Sam LaPorta, Adam Thielen, Jayden Reed, Darnell Mooney
+11 Travis Etienne Jr., Jameson Williams, Tank Bigsby, T.J. Hockenson, Najee Harris
+12 Josh Downs, Travis Kelce, DeAndre Hopkins, Deebo Samuel Sr.
+13 Romeo Doubs, Rome Odunze, Jaylen Warren, Michael Pittman Jr., Amari Cooper, Xavier Worthy, Jalen McMillan, Christian Watson
+14 Mark Andrews, Tank Dell, Rashod Bateman, Jalen Coker, Tyjae Spears
+15 Elijah Moore, Brenton Strange, Tucker Kraft, Pat Freiermuth, Quentin Johnston
+01 Jahmyr Gibbs, Saquon Barkley, Bijan Robinson, Josh Jacobs
+2 James Conner, Chase Brown, De'Von Achane
+3 Chuba Hubbard, James Cook, Derrick Henry, Kyren Williams
+4 Bucky Irving, Rico Dowdle, Joe Mixon
+5 Jonathan Taylor, Aaron Jones Sr., Isaac Guerendo, Zach Charbonnet
+6 Breece Hall, Jerome Ford, Rachaad White, Tony Pollard, Brian Robinson Jr.
+7 D'Andre Swift, Rhamondre Stevenson, Kendre Miller, Tyrone Tracy Jr., Isiah Pacheco
+8 Travis Etienne Jr., Jaylen Warren, Najee Harris, Tank Bigsby, Tyjae Spears
+9 Javonte Williams
+10 Ameer Abdullah, Gus Edwards, Tyler Allgeier, Justice Hill, Kimani Vidal, Alexander Mattison
+01 Ja'Marr Chase, Puka Nacua, Justin Jefferson
+2 CeeDee Lamb, Nico Collins, Mike Evans, Amon-Ra St. Brown, Davante Adams, A.J. Brown
+3 Brian Thomas Jr., Drake London, Courtland Sutton, Terry McLaurin, Tyreek Hill, Malik Nabers, Tee Higgins, Cooper Kupp, Jaxon Smith-Njigba
+4 Ladd McConkey, Jauan Jennings, Garrett Wilson
+5 Jakobi Meyers, Zay Flowers, DJ Moore, DeVonta Smith, Jordan Addison
+6 Khalil Shakir, Calvin Ridley, Jerry Jeudy, Keenan Allen, Marvin Harrison Jr., Adam Thielen, DK Metcalf
+7 Darnell Mooney, Jayden Reed, Jameson Williams, Josh Downs
+8 DeAndre Hopkins, Michael Pittman Jr., Romeo Doubs, Rome Odunze, Deebo Samuel Sr., Jalen McMillan
+9 Amari Cooper, Xavier Worthy, Rashod Bateman, Jalen Coker, Elijah Moore, Christian Watson, Tank Dell, DeMario Douglas
+10 Quentin Johnston, Tim Patrick, Keon Coleman, Wan'Dale Robinson, Nick Westbrook-Ikhine
+11 Joshua Palmer, Ray-Ray McCloud III, Michael Wilson, Brandin Cooks
+01 Trey McBride, Brock Bowers, George Kittle
+2 Jonnu Smith, T.J. Hockenson, Sam LaPorta, Travis Kelce
+3 Mark Andrews, Tucker Kraft, Brenton Strange, Pat Freiermuth, Hunter Henry
+4 Jake Ferguson, Dalton Kincaid, Cade Otton
+5 Dalton Schultz, Stone Smartt, Kyle Pitts, Juwan Johnson
+6 Chig Okonkwo, Cole Kmet, Noah Gray, Mike Gesicki
+7 Grant Calcaterra, Isaiah Likely
+01 Brian Thomas Jr., Trey McBride, Kyren Williams
+2 Drake London, Courtland Sutton, Terry McLaurin, Brock Bowers, Malik Nabers, Cooper Kupp, Tyreek Hill, Tee Higgins, Rico Dowdle, Bucky Irving, Jaxon Smith-Njigba
+3 Joe Mixon
+4 Ladd McConkey, Jauan Jennings, Jonathan Taylor, Garrett Wilson
+5 Aaron Jones Sr., George Kittle, Isaac Guerendo, Zach Charbonnet, Jakobi Meyers, Zay Flowers, DJ Moore, DeVonta Smith
+6 Jordan Addison, Breece Hall, Jerome Ford
+7 Jonnu Smith, Rachaad White, Tony Pollard, Khalil Shakir, Calvin Ridley, T.J. Hockenson, Brian Robinson Jr., Jerry Jeudy, Keenan Allen, Marvin Harrison Jr.
+8 Adam Thielen, DK Metcalf, D'Andre Swift, Rhamondre Stevenson
+9 Kendre Miller, Darnell Mooney, Jayden Reed, Sam LaPorta, Tyrone Tracy Jr., Isiah Pacheco
+10 Travis Kelce, Josh Downs, Jameson Williams
+11 DeAndre Hopkins, Jaylen Warren, Michael Pittman Jr., Travis Etienne Jr., Romeo Doubs, Rome Odunze, Deebo Samuel Sr., Jalen McMillan
+12 Amari Cooper, Xavier Worthy, Mark Andrews, Rashod Bateman, Najee Harris
+13 Jalen Coker
+14 Tyjae Spears, Christian Watson, Elijah Moore, Tucker Kraft, Tank Dell, Pat Freiermuth, Tank Bigsby, Brenton Strange, DeMario Douglas
