@@ -34,63 +34,57 @@ func (m mapOfUrls) getLists() {
 		} else {
 			m["dst"] = append(m["dst"], u)
 		}
-
 	}
 }
 
-type mapOfMaps map[string]map[int]string
-
-func (m mapOfMaps) makeRequests(position, url string) {
-
-	fmt.Println("Make requests")
+func requests(url string, contents chan<- string) {
 	resp, err := http.Get(url)
 	if err != nil {
-		fmt.Printf("Error: %s", err)
+		fmt.Println("Error!: ", err)
 	}
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Printf("Error for body read: %s", err)
+		fmt.Println("ERROR: ", err)
 	}
-	re := regexp.MustCompile(`[0-9]+\:\s`)
 	sb := string(body)
-	newString := strings.Split(sb, "Tier")
-	for idx, val := range newString {
-		fmt.Println("kicking off go routine")
+
+	var totalString string
+	re := regexp.MustCompile(`[0-9]+\:\s`)
+	stringWithoutTier := strings.Split(sb, "Tier")
+	for idx, val := range stringWithoutTier {
 		tier := re.ReplaceAllString(val, "")
-		f, err := os.Create(url)
-		if err != nil {
-			fmt.Println("Errpr in creating url file name", err)
-			panic(err)
-		}
-		defer f.Close()
-
-		f.WriteString(strconv.Itoa(idx) + tier)
-		f.Sync()
-
+		totalString += (strconv.Itoa(idx) + " " + tier)
 	}
+	contents <- totalString
 }
 
-func requests(position, url string, contents chan bool) {
+func writeToFile(formatType, url string, contents <-chan string) {
 
-}
-
-func writeToFile(contents chan string) {
-
+	fmt.Println("Write to file " + formatType)
+	f, err := os.Create(formatType)
+	if err != nil {
+		fmt.Println("error creating file: ", err)
+		panic(err)
+	}
+	defer f.Close()
+	for data := range contents {
+		fmt.Println("Data: " + data)
+		f.WriteString(data)
+	}
+	f.Sync()
 }
 
 func main() {
 
 	mUrls := make(mapOfUrls)
 	mUrls.getLists()
-	fmt.Printf("list of urls: %s \n", mUrls)
-	m := make(mapOfMaps)
+
+	//fmt.Printf("list of urls: %s \n", mUrls)
 	for formatType, sliceUrls := range mUrls {
 		for _, u := range sliceUrls {
-			fmt.Println("Before we start the go routine")
-			go func() {
-				fmt.Println("Kicking off the party")
-				m.makeRequests(formatType, u)
-			}()
+			contents := make(chan string)
+			go requests(u, contents)
+			go writeToFile(formatType, u, contents)
 		}
 	}
 }
