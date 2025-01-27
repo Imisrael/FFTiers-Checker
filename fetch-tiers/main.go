@@ -66,10 +66,10 @@ func writeToFile(formatType, uri string, contents <-chan string) {
 	if err != nil {
 		fmt.Println("Paning url", err)
 	}
-	hmm := strings.Split(u.Path, "/")
+	paths := strings.Split(u.Path, "/")
 	var filename string
-	for _, s := range hmm {
-		filename = s
+	for _, s := range paths {
+		filename = s //just get last path
 	}
 	f, err := os.Create(filename)
 	if err != nil {
@@ -78,7 +78,6 @@ func writeToFile(formatType, uri string, contents <-chan string) {
 	}
 	defer f.Close()
 	for data := range contents {
-		//	fmt.Println("Data: " + data)
 		f.WriteString(data)
 	}
 	f.Sync()
