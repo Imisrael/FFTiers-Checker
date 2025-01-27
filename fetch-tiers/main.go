@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"regexp"
 	"strconv"
@@ -58,17 +59,26 @@ func requests(url string, contents chan<- string) {
 	contents <- totalString
 }
 
-func writeToFile(formatType, url string, contents <-chan string) {
+func writeToFile(formatType, uri string, contents <-chan string) {
 
-	fmt.Println("Write to file " + formatType)
-	f, err := os.Create(formatType)
+	//fmt.Println("Write to file " + formatType)
+	u, err := url.Parse(uri)
+	if err != nil {
+		fmt.Println("Paning url", err)
+	}
+	hmm := strings.Split(u.Path, "/")
+	var filename string
+	for _, s := range hmm {
+		filename = s
+	}
+	f, err := os.Create(filename)
 	if err != nil {
 		fmt.Println("error creating file: ", err)
 		panic(err)
 	}
 	defer f.Close()
 	for data := range contents {
-		fmt.Println("Data: " + data)
+		//	fmt.Println("Data: " + data)
 		f.WriteString(data)
 	}
 	f.Sync()
