@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 const (
@@ -38,8 +39,8 @@ func (m mapOfUrls) getLists() {
 	}
 }
 
-func requests(url string, contents chan<- string) {
-	resp, err := http.Get(url)
+func worker(uri string, wg *sync.WaitGroup) {
+	resp, err := http.Get(uri)
 	if err != nil {
 		fmt.Println("Error!: ", err)
 	}
@@ -49,38 +50,32 @@ func requests(url string, contents chan<- string) {
 	}
 	sb := string(body)
 
-	var totalString string
+	var totalString strings.Builder
+
 	re := regexp.MustCompile(`[0-9]+\:\s`)
 	stringWithoutTier := strings.Split(sb, "Tier")
 	for idx, val := range stringWithoutTier {
 		tier := re.ReplaceAllString(val, "")
-		totalString += (strconv.Itoa(idx) + " " + tier)
+		totalString.WriteString((strconv.Itoa(idx) + " " + tier))
 	}
-	contents <- totalString
-}
 
-func writeToFile(formatType, uri string, contents <-chan string) {
-
-	//fmt.Println("Write to file " + formatType)
 	u, err := url.Parse(uri)
 	if err != nil {
 		fmt.Println("Paning url", err)
 	}
 	paths := strings.Split(u.Path, "/")
-	var filename string
-	for _, s := range paths {
-		filename = s //just get last path
-	}
+
+	filename := paths[len(paths)-1]
 	f, err := os.Create(filename)
 	if err != nil {
 		fmt.Println("error creating file: ", err)
 		panic(err)
 	}
 	defer f.Close()
-	for data := range contents {
-		f.WriteString(data)
-	}
+	f.WriteString(totalString.String())
+
 	f.Sync()
+	defer wg.Done()
 }
 
 func main() {
@@ -88,12 +83,15 @@ func main() {
 	mUrls := make(mapOfUrls)
 	mUrls.getLists()
 
-	//fmt.Printf("list of urls: %s \n", mUrls)
-	for formatType, sliceUrls := range mUrls {
+	//	fmt.Printf("list of urls: %s \n", mUrls)
+
+	var wg sync.WaitGroup
+
+	for _, sliceUrls := range mUrls {
 		for _, u := range sliceUrls {
-			contents := make(chan string)
-			go requests(u, contents)
-			go writeToFile(formatType, u, contents)
+			wg.Add(1)
+			go worker(u, &wg)
 		}
 	}
+	wg.Wait()
 }
