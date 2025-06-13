@@ -4,10 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
-	"os"
 	"regexp"
-	"strconv"
 	"strings"
 	"sync"
 )
@@ -25,6 +22,24 @@ var urls = []string{Qb, Dst, Rb, Wr, Te, Flex}
 
 type mapOfUrls map[string][]string
 
+type Tiers map[int]string
+
+type ScoringFormats struct {
+	Standard Tiers `json:"Standard,omitempty"`
+	PPR      Tiers `json:"PPR,omitempty"`
+	HalfPPR  Tiers `json:"HalfPPR,omitempty"`
+	All      Tiers `json:"All,omitempty"`
+}
+
+type Rankings struct {
+	QB   ScoringFormats `json:"QB"`
+	RB   ScoringFormats `json:"RB"`
+	WR   ScoringFormats `json:"WR"`
+	TE   ScoringFormats `json:"TE"`
+	Flex ScoringFormats `json:"Flex"`
+	DST  ScoringFormats `json:"DST"`
+}
+
 func (m mapOfUrls) getLists() {
 	for _, u := range urls {
 		if u != Qb && u != Dst {
@@ -39,7 +54,11 @@ func (m mapOfUrls) getLists() {
 	}
 }
 
-func worker(uri string, wg *sync.WaitGroup) {
+// https://s3-us-west-1.amazonaws.com/fftiers/out/text_TE-PPR.txt
+func worker(format, uri string, wg *sync.WaitGroup) {
+
+	var tiers = make(Tiers)
+
 	resp, err := http.Get(uri)
 	if err != nil {
 		fmt.Println("Error!: ", err)
@@ -50,32 +69,28 @@ func worker(uri string, wg *sync.WaitGroup) {
 	}
 	sb := string(body)
 
-	var totalString strings.Builder
+	// u, err := url.Parse(uri)
+	// if err != nil {
+	// 	fmt.Println("Paning url", err)
+	// }
+	// paths := strings.Split(u.Path, "/")
 
+	// Remove the word 'TIER' from each row
 	re := regexp.MustCompile(`[0-9]+\:\s`)
 	stringWithoutTier := strings.Split(sb, "Tier")
+
+	teRankings := Rankings{}
+	pprFormat := ScoringFormats{}
 	for idx, val := range stringWithoutTier {
 		tier := re.ReplaceAllString(val, "")
-		totalString.WriteString((strconv.Itoa(idx) + " " + tier))
+		//	totalString.WriteString((strconv.Itoa(idx) + " " + tier))
+		tiers[idx] = tier
 	}
+	pprFormat.PPR = tiers
+	teRankings.TE = pprFormat
 
-	u, err := url.Parse(uri)
-	if err != nil {
-		fmt.Println("Paning url", err)
-	}
-	paths := strings.Split(u.Path, "/")
+	fmt.Println(teRankings)
 
-	filename := paths[len(paths)-1]
-	f, err := os.Create(filename)
-	if err != nil {
-		fmt.Println("error creating file: ", err)
-		panic(err)
-	}
-	defer f.Close()
-	f.WriteString(totalString.String())
-
-	f.Sync()
-	defer wg.Done()
 }
 
 func main() {
@@ -87,10 +102,10 @@ func main() {
 
 	var wg sync.WaitGroup
 
-	for _, sliceUrls := range mUrls {
+	for pos, sliceUrls := range mUrls {
 		for _, u := range sliceUrls {
 			wg.Add(1)
-			go worker(u, &wg)
+			go worker(pos, u, &wg)
 		}
 	}
 	wg.Wait()
