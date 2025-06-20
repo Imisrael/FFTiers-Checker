@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 	"sync"
@@ -54,10 +55,40 @@ func (m mapOfUrls) getLists() {
 	}
 }
 
+func parseURL(urlString string) string {
+	u, err := url.Parse(urlString)
+	if err != nil {
+		fmt.Println("Paning url", err)
+	}
+	paths := strings.Split(u.Path, "/")
+	n := len(paths)
+	fileName := paths[n-1]
+
+	stringArray := strings.Split(fileName, "_")
+	s := stringArray[1]
+	removeFileExt := strings.Split(s, ".")
+
+	return removeFileExt[0]
+}
+
 // https://s3-us-west-1.amazonaws.com/fftiers/out/text_TE-PPR.txt
-func worker(format, uri string, wg *sync.WaitGroup) {
+func worker(uri string, wg *sync.WaitGroup) {
+
+	formatPosition := parseURL(uri)
+
+	checkIfSpecialScoring := strings.Split(formatPosition, "-")
+	if len(checkIfSpecialScoring) > 1 {
+
+		fmt.Println("special scoring!")
+		fmt.Println(checkIfSpecialScoring)
+	} else {
+
+		fmt.Println("standard")
+		fmt.Println(formatPosition)
+	}
 
 	var tiers = make(Tiers)
+	defer wg.Done()
 
 	resp, err := http.Get(uri)
 	if err != nil {
@@ -89,7 +120,7 @@ func worker(format, uri string, wg *sync.WaitGroup) {
 	pprFormat.PPR = tiers
 	teRankings.TE = pprFormat
 
-	fmt.Println(teRankings)
+	//fmt.Println(teRankings)
 
 }
 
@@ -102,10 +133,10 @@ func main() {
 
 	var wg sync.WaitGroup
 
-	for pos, sliceUrls := range mUrls {
+	for _, sliceUrls := range mUrls {
 		for _, u := range sliceUrls {
 			wg.Add(1)
-			go worker(pos, u, &wg)
+			go worker(u, &wg)
 		}
 	}
 	wg.Wait()
