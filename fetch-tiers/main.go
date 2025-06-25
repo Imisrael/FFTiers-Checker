@@ -1,10 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
 	"strings"
 	"sync"
@@ -29,7 +31,7 @@ type ScoringFormats struct {
 	Standard Tiers `json:"Standard,omitempty"`
 	PPR      Tiers `json:"PPR,omitempty"`
 	HalfPPR  Tiers `json:"HalfPPR,omitempty"`
-	All      Tiers `json:"All,omitempty"`
+	// All      Tiers `json:"All,omitempty"`
 }
 
 type Rankings struct {
@@ -39,6 +41,38 @@ type Rankings struct {
 	TE   ScoringFormats `json:"TE"`
 	Flex ScoringFormats `json:"Flex"`
 	DST  ScoringFormats `json:"DST"`
+}
+
+func (sf *ScoringFormats) addTier(format string, tier Tiers) {
+	//	fmt.Println("Parsing Type: " + format)
+
+	switch format {
+	case "Standard":
+		sf.Standard = tier
+	case "HALF":
+		sf.HalfPPR = tier
+	case "PPR":
+		sf.PPR = tier
+	}
+}
+
+func (r *Rankings) addScoringFormat(format, position string, tier Tiers) {
+	//fmt.Println("Adding Scoring Format " + format + " " + position)
+
+	switch position {
+	case "QB":
+		r.QB.addTier(format, tier)
+	case "DST":
+		r.DST.addTier(format, tier)
+	case "RB":
+		r.RB.addTier(format, tier)
+	case "WR":
+		r.WR.addTier(format, tier)
+	case "TE":
+		r.TE.addTier(format, tier)
+	case "FLX":
+		r.Flex.addTier(format, tier)
+	}
 }
 
 func (m mapOfUrls) getLists() {
@@ -71,23 +105,27 @@ func parseURL(urlString string) string {
 	return removeFileExt[0]
 }
 
-// https://s3-us-west-1.amazonaws.com/fftiers/out/text_TE-PPR.txt
-func worker(uri string, wg *sync.WaitGroup) {
+func worker(uri string, wg *sync.WaitGroup, fullRankings *Rankings) {
 
 	formatPosition := parseURL(uri)
-
 	checkIfSpecialScoring := strings.Split(formatPosition, "-")
+	var position string
+	var format string
+
 	if len(checkIfSpecialScoring) > 1 {
+		if checkIfSpecialScoring[0] != "" {
+			//fmt.Println("cspecial scoring array?", checkIfSpecialScoring)
+			position = checkIfSpecialScoring[0]
+			format = checkIfSpecialScoring[1]
+		}
 
-		fmt.Println("special scoring!")
-		fmt.Println(checkIfSpecialScoring)
 	} else {
-
-		fmt.Println("standard")
-		fmt.Println(formatPosition)
+		format = "Standard"
+		position = formatPosition
 	}
 
-	var tiers = make(Tiers)
+	//fmt.Println(position, format)
+
 	defer wg.Done()
 
 	resp, err := http.Get(uri)
@@ -100,27 +138,20 @@ func worker(uri string, wg *sync.WaitGroup) {
 	}
 	sb := string(body)
 
-	// u, err := url.Parse(uri)
-	// if err != nil {
-	// 	fmt.Println("Paning url", err)
-	// }
-	// paths := strings.Split(u.Path, "/")
-
 	// Remove the word 'TIER' from each row
 	re := regexp.MustCompile(`[0-9]+\:\s`)
 	stringWithoutTier := strings.Split(sb, "Tier")
 
-	teRankings := Rankings{}
-	pprFormat := ScoringFormats{}
+	var tiers = make(Tiers)
 	for idx, val := range stringWithoutTier {
-		tier := re.ReplaceAllString(val, "")
-		//	totalString.WriteString((strconv.Itoa(idx) + " " + tier))
-		tiers[idx] = tier
-	}
-	pprFormat.PPR = tiers
-	teRankings.TE = pprFormat
+		if idx != 0 {
+			tier := re.ReplaceAllString(val, "")
+			tiers[idx] = tier
+		}
 
-	//fmt.Println(teRankings)
+	}
+
+	fullRankings.addScoringFormat(format, position, tiers)
 
 }
 
@@ -132,12 +163,27 @@ func main() {
 	//	fmt.Printf("list of urls: %s \n", mUrls)
 
 	var wg sync.WaitGroup
+	var fullRankings = Rankings{}
 
 	for _, sliceUrls := range mUrls {
 		for _, u := range sliceUrls {
 			wg.Add(1)
-			go worker(u, &wg)
+			go worker(u, &wg, &fullRankings)
 		}
 	}
 	wg.Wait()
+	b, err := json.MarshalIndent(fullRankings, "", "  ")
+	if err != nil {
+		fmt.Println("Marshaling error!", err)
+	}
+	f, err := os.Create("tiers.json")
+	if err != nil {
+		fmt.Println("Error creating file")
+	}
+	_, err = f.WriteString(string(b))
+	if err != nil {
+		fmt.Println("Error writing to file")
+	}
+	f.Sync()
+	defer f.Close()
 }
