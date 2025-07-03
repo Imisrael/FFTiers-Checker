@@ -25,7 +25,7 @@ var urls = []string{Qb, Dst, Rb, Wr, Te, Flex}
 
 type mapOfUrls map[string][]string
 
-type Tiers map[int]string
+type Tiers []string
 
 type ScoringFormats struct {
 	Standard Tiers `json:"Standard,omitempty"`
@@ -139,13 +139,13 @@ func worker(uri string, wg *sync.WaitGroup, fullRankings *Rankings) {
 	re := regexp.MustCompile(`[0-9]+\:\s`)
 	stringWithoutTier := strings.Split(sb, "Tier")
 
-	var tiers = make(Tiers)
+	var tiers Tiers
 	for idx, val := range stringWithoutTier {
 		if idx != 0 {
 			tier := re.ReplaceAllString(val, "")
 			tier = strings.TrimSuffix(tier, "\n")
 			tier = strings.TrimPrefix(tier, " ")
-			tiers[idx] = tier
+			tiers = append(tiers, tier)
 		}
 
 	}
@@ -154,7 +154,7 @@ func worker(uri string, wg *sync.WaitGroup, fullRankings *Rankings) {
 
 }
 
-func main() {
+func Get() {
 
 	mUrls := make(mapOfUrls)
 	mUrls.getLists()
@@ -175,7 +175,7 @@ func main() {
 	if err != nil {
 		fmt.Println("Marshaling error!", err)
 	}
-	f, err := os.Create("../../files/tiers.json")
+	f, err := os.Create("../files/tiers.json")
 	if err != nil {
 		fmt.Println("Error creating file")
 	}

@@ -1,4 +1,3 @@
-import React from 'react'
 import ReactDOM from 'react-dom/client'
 import {
     QueryClient,
@@ -20,10 +19,10 @@ export default function App() {
 
 function Example() {
     const { isPending, error, data, isFetching } = useQuery({
-        queryKey: ['repoData'],
+        queryKey: ['tiers'],
         queryFn: async () => {
             const response = await fetch(
-                'https://api.github.com/repos/TanStack/query',
+                '/json',
             )
             return await response.json()
         },
@@ -33,14 +32,17 @@ function Example() {
 
     if (error) return 'An error has occurred: ' + error.message
 
+    const Qb = data.QB.Standard.map(tier =>
+        <li>{tier}</li>
+    )
+
+    console.log(data)
+
     return (
         <div>
-            <h1>{data.full_name}</h1>
-            <p>{data.description}</p>
-            <strong>👀 {data.subscribers_count}</strong>{' '}
-            <strong>✨ {data.stargazers_count}</strong>{' '}
-            <strong>🍴 {data.forks_count}</strong>
-            <div>{isFetching ? 'Updating...' : ''}</div>
+            <ul>
+                {Qb}
+            </ul>
         </div>
     )
 }
