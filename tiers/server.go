@@ -7,11 +7,11 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	fetchtiers "israelimru.com/cli/tiers/fetchTiers"
+	fetchtiers "israelimru.com/cli/fetchTiers"
 )
 
 func readFile() fetchtiers.Rankings {
-	b, err := os.ReadFile("../../files/tiers.json")
+	b, err := os.ReadFile("../files/tiers.json")
 	if err != nil {
 		fmt.Println("Error Reading local file", err)
 	}
