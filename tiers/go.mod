@@ -33,8 +33,15 @@ require (
 	modernc.org/sqlite v1.38.0 // indirect
 )
 
+require github.com/habibrosyad/pocketbase-go-sdk v0.0.0-20241227100454-1be71768920c
+
 require (
+	github.com/SierraSoftworks/multicast/v2 v2.0.0 // indirect
+	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
+	github.com/donovanhide/eventsource v0.0.0-20210830082556-c59027999da0 // indirect
+	github.com/duke-git/lancet/v2 v2.3.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.9 // indirect
+	github.com/go-resty/resty/v2 v2.12.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect

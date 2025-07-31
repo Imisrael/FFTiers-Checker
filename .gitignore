@@ -28,3 +28,10 @@ pb_data/
 pocketbase
 pocketbase.exe
 pb_logs/
+
+node_modules
+build
+npm-debug.log
+.env
+.DS_Store
+dist/
