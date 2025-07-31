@@ -6,7 +6,7 @@ import {
 } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient();
 
 export default function App() {
     return (
@@ -18,13 +18,12 @@ export default function App() {
 }
 
 function Example() {
-    const { isPending, error, data, isFetching } = useQuery({
+    const { isPending, error, data } = useQuery({
         queryKey: ['tiers'],
         queryFn: async () => {
-            const response = await fetch(
-                '/json',
-            )
-            return await response.json()
+            const response = await fetch('/json')
+            const jsonData = await response.json()
+            return jsonData;
         },
     })
 
@@ -32,19 +31,19 @@ function Example() {
 
     if (error) return 'An error has occurred: ' + error.message
 
-    const Qb = data.QB.Standard.map(tier =>
-        <li>{tier}</li>
-    )
 
     console.log(data)
 
-    return (
-        <div>
-            <ul>
-                {Qb}
-            </ul>
-        </div>
+        return (
+            <div>
+                <pre>
+                    <code>
+                        {JSON.stringify(data, null, 2)}
+                    </code>
+                </pre>
+            </div>
     )
+
 }
 
 const rootElement = document.getElementById('root') as HTMLElement

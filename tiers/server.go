@@ -7,8 +7,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
+	"github.com/pocketbase/pocketbase"
+	"github.com/pocketbase/pocketbase/apis"
+	"github.com/pocketbase/pocketbase/core"
 	fetchtiers "israelimru.com/cli/fetchTiers"
 )
 
@@ -23,32 +24,34 @@ func readFile() fetchtiers.Rankings {
 		fmt.Println("Error unmarshaling", err)
 	}
 
-	fmt.Println(jsonTiers)
+	//	fmt.Println(jsonTiers)
 	return jsonTiers
 }
 
-func getTiers(c *gin.Context) {
+func getTiers(e *core.RequestEvent) error {
 	log.Println("Getting new tier list!")
 	fetchtiers.Get()
-	c.Status(http.StatusOK)
+	return e.String(http.StatusOK, "Okay cools")
 }
 
-func serveJSON(c *gin.Context) {
+func serveJSON(e *core.RequestEvent) error {
 	jsonTiers := readFile()
-	c.JSON(http.StatusOK, jsonTiers)
+	return e.JSON(http.StatusOK, jsonTiers)
 }
 
 func main() {
-	router := gin.Default()
-	router.Use(cors.Default())
 
-	router.Static("/assets", "../frontend/dist/assets")
-	router.LoadHTMLFiles("../frontend/dist/index.html")
-	router.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.html", gin.H{})
+	app := pocketbase.New()
+
+	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
+		se.Router.GET("/", apis.Static(os.DirFS("../frontend/dist/"), false))
+		se.Router.GET("/json", serveJSON)
+		se.Router.GET("/refresh", getTiers)
+		return se.Next()
 	})
-	router.GET("/json", serveJSON)
-	router.GET("/refresh", getTiers)
 
-	router.Run()
+	if err := app.Start(); err != nil {
+		log.Fatal(err)
+	}
+
 }
