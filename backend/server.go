@@ -45,6 +45,7 @@ func main() {
 	app := pocketbase.New()
 
 	isGoRun := strings.HasPrefix(os.Args[0], os.TempDir())
+	fmt.Println(isGoRun)
 	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
 		// This enables the automatic creation of migration files
 		// when you make changes in the Admin UI.
