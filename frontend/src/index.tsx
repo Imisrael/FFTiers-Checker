@@ -6,14 +6,10 @@ import {
 } from '@tanstack/react-query';
 import PocketBase from 'pocketbase';
 
-// 1. Initialize PocketBase client
-// This can be done once in a separate file and imported.
-const pb = new PocketBase('http://127.0.0.1:8090');
 
-// 2. Create a QueryClient
+const pb = new PocketBase('http://127.0.0.1:8090');
 const queryClient = new QueryClient();
 
-// The main App component that provides the QueryClient to all children
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -25,7 +21,6 @@ export default function App() {
               This component uses TanStack Query to fetch and display player data from a PocketBase backend.
             </p>
           </header>
-          {/* We are querying for "Travis Kelce" in this example */}
           <PlayerRankings playerName="Travis Kelce" />
         </div>
       </div>
@@ -50,11 +45,11 @@ function PlayerRankings({ playerName }) {
 
       // Construct the filter using the dot-notation we figured out.
       // This finds rankings where the player's name matches AND the category is TE or Flex.
-      const filter = `(player.name = '${playerName}' && (ranking_category.name = 'TE' || ranking_category.name = 'Flex'))`;
+      //  const filter = `(player.name = '${playerName}' && (ranking_category.name = 'TE' || ranking_category.name = 'Flex'))`;
 
       // Fetch the data from the 'weekly_rankings' collection.
       const records = await pb.collection('weekly_rankings').getFullList({
-        filter: filter,
+        // filter: filter,
         // Don't forget to expand the relations to get the readable names!
         expand: 'player,ranking_category,format',
       });
@@ -64,9 +59,6 @@ function PlayerRankings({ playerName }) {
     // staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  // 4. Render UI based on the query state
-
-  // Render a loading state
   if (isLoading) {
     return (
       <div className="text-center p-8 bg-gray-800 rounded-lg">
@@ -88,9 +80,9 @@ function PlayerRankings({ playerName }) {
   // Render a "not found" state
   if (!data || data.length === 0) {
     return (
-        <div className="text-center p-8 bg-gray-800 rounded-lg">
-            <p className="text-lg text-gray-300">No TE or Flex rankings found for "{playerName}".</p>
-        </div>
+      <div className="text-center p-8 bg-gray-800 rounded-lg">
+        <p className="text-lg text-gray-300">No TE or Flex rankings found for "{playerName}".</p>
+      </div>
     );
   }
 
@@ -105,15 +97,15 @@ function PlayerRankings({ playerName }) {
         {data.map((ranking) => (
           <li key={ranking.id} className="bg-gray-700/50 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <div>
-                <span className="font-bold text-lg text-white">
-                    {ranking.expand.ranking_category.name}
-                </span>
-                <span className="text-sm text-gray-400 ml-2">
-                    ({ranking.expand.format.name} Format)
-                </span>
-                 <p className="text-xs text-gray-500">
-                    Year: {ranking.year}, Week: {ranking.week}
-                </p>
+              <span className="font-bold text-lg text-white">
+                {ranking.expand.ranking_category.name}
+              </span>
+              <span className="text-sm text-gray-400 ml-2">
+                ({ranking.expand.format.name} Format)
+              </span>
+              <p className="text-xs text-gray-500">
+                Year: {ranking.year}, Week: {ranking.week}
+              </p>
             </div>
             <div className="bg-green-500 text-green-900 font-bold py-1 px-3 rounded-full text-center">
               Tier {ranking.tier}
