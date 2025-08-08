@@ -11,8 +11,16 @@ import PocketBase from 'pocketbase';
 import RankingTable from './components/RankingTable';
 
 
+const tableMaking = () => (
+  <div style={{ height: 500, width: '100%' }}>
+    <RankingTable playerName={'Derrick Henry'} />
+  </div>
+)
+
 
 export default function App() {
+  const tableArr = [];
+  tableArr.push(tableMaking());
   const queryClient = new QueryClient();
   const persister = createAsyncStoragePersister({
     storage: window.localStorage,
@@ -24,9 +32,7 @@ export default function App() {
           <header className="mb-8">
             <h1 className="text-4xl font-bold text-green-400 mb-2">Generic Title</h1>
           </header>
-          <div style={{ height: 500, width: '100%' }}>
-            <RankingTable playerName={'Derrick Henry'} />
-          </div>
+          {tableArr.map((tab) => tab)}
 
         </div>
       </div>
