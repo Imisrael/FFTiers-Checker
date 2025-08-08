@@ -22,9 +22,12 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.31.0",
+    "@tanstack/query-async-storage-persister": "^5.83.1",
+    "@tanstack/react-query-persist-client": "^5.84.1",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react-swc": "^3.10.2",
+    "ag-grid-react": "^34.1.1",
     "eslint": "^9.31.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",

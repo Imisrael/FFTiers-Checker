@@ -8,8 +8,10 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 const (
@@ -155,6 +157,8 @@ func worker(uri string, wg *sync.WaitGroup, fullRankings *Rankings) {
 }
 
 func Get() {
+	now := time.Now()
+	dateString := strconv.Itoa(now.Year()) + "-" + strconv.Itoa(int(now.Month())) + "-" + strconv.Itoa(now.Day())
 
 	mUrls := make(mapOfUrls)
 	mUrls.getLists()
@@ -175,7 +179,7 @@ func Get() {
 	if err != nil {
 		fmt.Println("Marshaling error!", err)
 	}
-	f, err := os.Create("../files/tiers.json")
+	f, err := os.Create("../files/" + dateString + "-tiers.json")
 	if err != nil {
 		fmt.Println("Error creating file")
 	}
