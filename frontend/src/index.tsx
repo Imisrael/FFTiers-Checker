@@ -24,7 +24,7 @@ export default function App() {
           <header className="mb-8">
             <h1 className="text-4xl font-bold text-green-400 mb-2">Generic Title</h1>
           </header>
-          <div style={{ height: 500 }}>
+          <div style={{ height: 500, width: '100%' }}>
             <RankingTable playerName={'Derrick Henry'} />
           </div>
 

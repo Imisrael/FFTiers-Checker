@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 
 import { useQuery } from '@tanstack/react-query';
@@ -31,18 +31,22 @@ export default function RankingTable({ playerName }) {
 
 	const pb = new PocketBase('http://127.0.0.1:8090');
 
+	const defaultColDef = useMemo(() => ({
+		filter: true // Enable filtering on all columns
+	}))
+
 	const [colDefs, setColDefs] = useState([
 		{ field: 'tier' },
-		{ field: 'expand.format.name' },
-		{ field: 'expand.player.name' },
-		{ field: 'expand.ranking_category.name' },
+		{ field: 'expand.format.name', headerName: 'Format' },
+		{ field: 'expand.player.name', headerName: 'Name' },
+		{ field: 'expand.ranking_category.name', headerName: 'Position' },
 	]);
 
 	const { data, isLoading, isError, error } = useQuery({
 		queryKey: ['playerRankings', playerName],
 		queryFn: async () => {
-			const filter = `(player.name = '${playerName}' && (week = '0') && (ranking_category.name = 'RB' || ranking_category.name = 'Flex'))`;
-
+			//const filter = `(player.name = '${playerName}' && (week = '0') && (ranking_category.name = 'RB' || ranking_category.name = 'Flex'))`;
+			const filter = `(week = '0' && year = '2025')`;
 			const records = await pb.collection('weekly_rankings').getFullList({
 				filter: filter,
 				// Don't forget to expand the relations to get the readable names!
@@ -113,6 +117,7 @@ export default function RankingTable({ playerName }) {
 			<AgGridReact
 				rowData={data}
 				columnDefs={colDefs}
+				defaultColDef={defaultColDef}
 			/>
 		</>
 	);
