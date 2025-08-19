@@ -6,5 +6,5 @@ import (
 
 func main() {
 	fetchtiers.Get()
-
+	fetchtiers.GetBigBoard()
 }

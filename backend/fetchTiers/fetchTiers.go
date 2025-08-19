@@ -24,6 +24,7 @@ const (
 )
 
 var urls = []string{Qb, Dst, Rb, Wr, Te, Flex}
+var bigBoardUrls []string = []string{"https://s3-us-west-1.amazonaws.com/fftiers/out/text_ALL-adjust", "https://s3-us-west-1.amazonaws.com/fftiers/out/text_ALL-HALF-PPR-adjust", "https://s3-us-west-1.amazonaws.com/fftiers/out/text_ALL-PPR-adjust"}
 
 type mapOfUrls map[string][]string
 
@@ -54,6 +55,17 @@ func (sf *ScoringFormats) addTier(format string, tier Tiers) {
 		sf.HalfPPR = tier
 	case "PPR":
 		sf.PPR = tier
+	}
+}
+
+func (sf *ScoringFormats) appendTier(format string, tier Tiers) {
+	switch format {
+	case "Standard":
+		sf.Standard = append(sf.Standard, tier...)
+	case "HALF":
+		sf.HalfPPR = append(sf.HalfPPR, tier...)
+	case "PPR":
+		sf.PPR = append(sf.PPR, tier...)
 	}
 }
 
@@ -90,6 +102,21 @@ func (m mapOfUrls) getLists() {
 	}
 }
 
+func (m mapOfUrls) getBigBoardLists() {
+	for i, u := range bigBoardUrls {
+		for j := range 3 {
+			switch i {
+			case 0:
+				m["standard"] = append(m["standard"], u+strconv.Itoa(j)+".txt")
+			case 1:
+				m["half"] = append(m["half"], u+strconv.Itoa(j)+".txt")
+			case 2:
+				m["ppr"] = append(m["ppr"], u+strconv.Itoa(j)+".txt")
+			}
+		}
+	}
+}
+
 func parseURL(urlString string) string {
 	u, err := url.Parse(urlString)
 	if err != nil {
@@ -108,6 +135,8 @@ func parseURL(urlString string) string {
 
 func worker(uri string, wg *sync.WaitGroup, fullRankings *Rankings) {
 
+	defer wg.Done()
+
 	formatPosition := parseURL(uri)
 	checkIfSpecialScoring := strings.Split(formatPosition, "-")
 	var position string
@@ -115,17 +144,16 @@ func worker(uri string, wg *sync.WaitGroup, fullRankings *Rankings) {
 
 	if len(checkIfSpecialScoring) > 1 {
 		if checkIfSpecialScoring[0] != "" {
-			//fmt.Println("cspecial scoring array?", checkIfSpecialScoring)
+			fmt.Println("cspecial scoring array?", checkIfSpecialScoring)
 			position = checkIfSpecialScoring[0]
 			format = checkIfSpecialScoring[1]
 		}
 
 	} else {
+		fmt.Println("NOT", checkIfSpecialScoring)
 		format = "Standard"
 		position = formatPosition
 	}
-
-	defer wg.Done()
 
 	resp, err := http.Get(uri)
 	if err != nil {
@@ -160,10 +188,9 @@ func Get() {
 	now := time.Now()
 	dateString := strconv.Itoa(now.Year()) + "-" + strconv.Itoa(int(now.Month())) + "-" + strconv.Itoa(now.Day())
 
+	var fileName = ""
 	mUrls := make(mapOfUrls)
 	mUrls.getLists()
-
-	//	fmt.Printf("list of urls: %s \n", mUrls)
 
 	var wg sync.WaitGroup
 	var fullRankings = Rankings{}
@@ -179,7 +206,7 @@ func Get() {
 	if err != nil {
 		fmt.Println("Marshaling error!", err)
 	}
-	f, err := os.Create("../files/" + dateString + "-tiers.json")
+	f, err := os.Create("../files/" + dateString + "_tiers" + fileName + ".json")
 	if err != nil {
 		fmt.Println("Error creating file")
 	}
@@ -189,4 +216,86 @@ func Get() {
 	}
 	f.Sync()
 	defer f.Close()
+}
+
+func bigBoardWorker(uri string, bigBoardRankings *ScoringFormats) {
+
+	parsedUrl := parseURL(uri)
+	parsedArr := strings.Split(parsedUrl, "-")
+	n := len(parsedArr)
+	var format = ""
+
+	switch n {
+	case 4:
+		format = "HALF"
+	case 3:
+		format = "PPR"
+	case 2:
+		format = "Standard"
+	default:
+		format = "Standard"
+	}
+
+	resp, err := http.Get(uri)
+	if err != nil {
+		fmt.Println("Error!: ", err)
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("ERROR: ", err)
+	}
+	sb := string(body)
+
+	// Remove the word 'TIER' from each row
+	re := regexp.MustCompile(`[0-9]+\:\s`)
+	stringWithoutTier := strings.Split(sb, "Tier")
+
+	var tiers Tiers
+	for idx, val := range stringWithoutTier {
+		if idx != 0 {
+			tier := re.ReplaceAllString(val, "")
+			tier = strings.TrimSuffix(tier, "\n")
+			tier = strings.TrimPrefix(tier, " ")
+			tiers = append(tiers, tier)
+		}
+
+	}
+
+	bigBoardRankings.appendTier(format, tiers)
+
+}
+
+func GetBigBoard() {
+	now := time.Now()
+	dateString := strconv.Itoa(now.Year()) + "-" + strconv.Itoa(int(now.Month())) + "-" + strconv.Itoa(now.Day())
+	mUrls := make(mapOfUrls)
+	mUrls.getBigBoardLists()
+	var fileName = "_bigBoard"
+
+	//	fmt.Printf("list of urls: %s \n", mUrls)
+
+	var wg sync.WaitGroup
+	var bigBoardRankings = ScoringFormats{}
+
+	for _, sliceUrls := range mUrls {
+		for _, u := range sliceUrls {
+			bigBoardWorker(u, &bigBoardRankings)
+		}
+	}
+	wg.Wait()
+	b, err := json.MarshalIndent(bigBoardRankings, "", "  ")
+	if err != nil {
+		fmt.Println("Marshaling error!", err)
+	}
+	f, err := os.Create("../files/" + dateString + "_tiers" + fileName + ".json")
+	if err != nil {
+		fmt.Println("Error creating file")
+	}
+	_, err = f.WriteString(string(b))
+	if err != nil {
+		fmt.Println("Error writing to file")
+	}
+	f.Sync()
+	defer f.Close()
+
 }
