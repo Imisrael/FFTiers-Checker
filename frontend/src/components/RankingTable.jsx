@@ -27,7 +27,9 @@ ModuleRegistry.registerModules([
 	ClientSideRowModelModule,
 ]);
 
-export default function RankingTable({ playerName }) {
+export default function RankingTable({ type }) {
+
+	console.log("Type: ", type)
 
 	const pb = new PocketBase('http://127.0.0.1:8090');
 
@@ -39,18 +41,17 @@ export default function RankingTable({ playerName }) {
 		{ field: 'tier' },
 		{ field: 'expand.format.name', headerName: 'Format' },
 		{ field: 'expand.player.name', headerName: 'Name' },
-		{ field: 'expand.ranking_category.name', headerName: 'Position' },
+		{ field: 'expand.position.name', headerName: 'Position' },
 	]);
 
 	const { data, isLoading, isError, error } = useQuery({
-		queryKey: ['playerRankings', playerName],
+		queryKey: [type],
 		queryFn: async () => {
 			//const filter = `(player.name = '${playerName}' && (week = '0') && (ranking_category.name = 'RB' || ranking_category.name = 'Flex'))`;
-			const filter = `(week = '0' && year = '2025')`;
-			const records = await pb.collection('weekly_rankings').getFullList({
-				filter: filter,
-				// Don't forget to expand the relations to get the readable names!
-				expand: 'player,ranking_category,format',
+			//	const filter = `(week = '0' && year = '2025')`;
+			const records = await pb.collection(type).getFullList({
+				//		filter: filter,
+				expand: 'player,position,format',
 			});
 			return records;
 		},
@@ -76,7 +77,7 @@ export default function RankingTable({ playerName }) {
 	if (!data || data.length === 0) {
 		return (
 			<div className="text-center p-8 bg-gray-800 rounded-lg">
-				<p className="text-lg text-gray-300">No TE or Flex rankings found for "{playerName}".</p>
+				<p className="text-lg text-gray-300">No TE or Flex rankings found .</p>
 			</div>
 		);
 	}
@@ -90,29 +91,6 @@ export default function RankingTable({ playerName }) {
 
 
 	return (
-		// <div className="bg-gray-800 p-6 rounded-xl shadow-lg">
-		//   <ul className="space-y-4">
-		//     {data.map((ranking) => (
-		//       <li key={ranking.id} className="bg-gray-700/50 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-		//         <div>
-		//           <span className="font-bold text-lg text-white">
-		//             {ranking.expand.ranking_category.name}
-		//           </span>
-		//           <span className="text-sm text-gray-400 ml-2">
-		//             ({ranking.expand.format.name} Format)
-		//           </span>
-		//           <p className="text-xs text-gray-500">
-		//             Year: {ranking.year}, Week: {ranking.week}
-		//           </p>
-		//         </div>
-		//         <div className="bg-green-500 text-green-900 font-bold py-1 px-3 rounded-full text-center">
-		//           Tier {ranking.tier}
-		//         </div>
-		//       </li>
-		//     ))}
-		//   </ul>
-		// </div>
-
 		<>
 			<AgGridReact
 				rowData={data}

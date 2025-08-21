@@ -21,9 +21,10 @@ const (
 	Wr   = "https://s3-us-west-1.amazonaws.com/fftiers/out/text_WR"
 	Te   = "https://s3-us-west-1.amazonaws.com/fftiers/out/text_TE"
 	Flex = "https://s3-us-west-1.amazonaws.com/fftiers/out/text_FLX"
+	K    = "https://s3-us-west-1.amazonaws.com/fftiers/out/text_K.txt"
 )
 
-var urls = []string{Qb, Dst, Rb, Wr, Te, Flex}
+var urls = []string{Qb, Dst, Rb, Wr, Te, Flex, K}
 var bigBoardUrls []string = []string{"https://s3-us-west-1.amazonaws.com/fftiers/out/text_ALL-adjust", "https://s3-us-west-1.amazonaws.com/fftiers/out/text_ALL-HALF-PPR-adjust", "https://s3-us-west-1.amazonaws.com/fftiers/out/text_ALL-PPR-adjust"}
 
 type mapOfUrls map[string][]string
@@ -43,6 +44,7 @@ type Rankings struct {
 	TE   ScoringFormats `json:"TE"`
 	Flex ScoringFormats `json:"Flex"`
 	DST  ScoringFormats `json:"DST"`
+	K    ScoringFormats `json:"K"`
 }
 
 func (sf *ScoringFormats) addTier(format string, tier Tiers) {
@@ -85,19 +87,23 @@ func (r *Rankings) addScoringFormat(format, position string, tier Tiers) {
 		r.TE.addTier(format, tier)
 	case "FLX":
 		r.Flex.addTier(format, tier)
+	case "K":
+		r.K.addTier(format, tier)
 	}
 }
 
 func (m mapOfUrls) getLists() {
 	for _, u := range urls {
-		if u != Qb && u != Dst {
+		if u != Qb && u != Dst && u != K {
 			m["standard"] = append(m["standard"], u+".txt")
 			m["half"] = append(m["half"], u+"-HALF.txt")
 			m["ppr"] = append(m["ppr"], u+"-PPR.txt")
 		} else if u == Qb {
 			m["qb"] = append(m["qb"], u)
-		} else {
+		} else if u == Dst {
 			m["dst"] = append(m["dst"], u)
+		} else {
+			m["k"] = append(m["k"], u)
 		}
 	}
 }
@@ -144,13 +150,13 @@ func worker(uri string, wg *sync.WaitGroup, fullRankings *Rankings) {
 
 	if len(checkIfSpecialScoring) > 1 {
 		if checkIfSpecialScoring[0] != "" {
-			fmt.Println("cspecial scoring array?", checkIfSpecialScoring)
+			//		fmt.Println("cspecial scoring array?", checkIfSpecialScoring)
 			position = checkIfSpecialScoring[0]
 			format = checkIfSpecialScoring[1]
 		}
 
 	} else {
-		fmt.Println("NOT", checkIfSpecialScoring)
+		//	fmt.Println("NOT", checkIfSpecialScoring)
 		format = "Standard"
 		position = formatPosition
 	}
@@ -198,6 +204,7 @@ func Get() {
 	for _, sliceUrls := range mUrls {
 		for _, u := range sliceUrls {
 			wg.Add(1)
+			fmt.Println("Starting go routine with: " + u)
 			go worker(u, &wg, &fullRankings)
 		}
 	}
@@ -222,10 +229,10 @@ func bigBoardWorker(uri string, bigBoardRankings *ScoringFormats) {
 
 	parsedUrl := parseURL(uri)
 	parsedArr := strings.Split(parsedUrl, "-")
-	n := len(parsedArr)
+
 	var format = ""
 
-	switch n {
+	switch len(parsedArr) {
 	case 4:
 		format = "HALF"
 	case 3:

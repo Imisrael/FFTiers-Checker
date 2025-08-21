@@ -1,19 +1,13 @@
-// To run this script, you first need to install the PocketBase JS SDK:
-// npm install pocketbase
-//
-// Then, you can run it from your terminal like this:
 // node ingest.js --week=1 --year=2025
 
 import PocketBase from 'pocketbase';
 import fs from 'fs/promises';
 import path from 'path';
 
-// --- CONFIGURATION ---
-// Fill these out with your PocketBase details.
-const POCKETBASE_URL = 'http://127.0.0.1:8090'; // Your PocketBase server URL
-const ADMIN_EMAIL = 'israelimru@gmail.com';       // Your PocketBase admin email
-const ADMIN_PASSWORD = 'bwd0fbt2exc-yqe7GEK';        // Your PocketBase admin password
-const JSON_FILE_PATH = '../../files/tiers.json';      // The path to your "mega JSON" file
+const POCKETBASE_URL = 'http://127.0.0.1:8090';
+const ADMIN_EMAIL = 'israelimru@gmail.com';
+const ADMIN_PASSWORD = 'bwd0fbt2exc-yqe7GEK';
+const JSON_FILE_PATH = '../../files/tiers.json';
 
 // --- HELPER TO PARSE COMMAND-LINE ARGUMENTS ---
 function getArgs() {
@@ -90,10 +84,10 @@ async function main() {
             throw error;
         }
     };
-    
+
     // Specialized version for players to handle the relation field.
     const getOrCreatePlayer = async (playerName, primaryPositionID) => {
-         if (playerCache.has(playerName)) {
+        if (playerCache.has(playerName)) {
             return playerCache.get(playerName);
         }
         try {
@@ -101,11 +95,11 @@ async function main() {
             playerCache.set(playerName, record.id);
             return record.id;
         } catch (error) {
-             if (error.status === 404) {
+            if (error.status === 404) {
                 console.log(`Creating new player: ${playerName}`);
-                const newRecord = await pb.collection('players').create({ 
+                const newRecord = await pb.collection('players').create({
                     name: playerName,
-                    primary_position: primaryPositionID 
+                    position: primaryPositionID
                 });
                 playerCache.set(playerName, newRecord.id);
                 return newRecord.id;
@@ -116,9 +110,9 @@ async function main() {
 
 
     // --- DATA INGESTION LOGIC ---
-    for (const [positionName, formats] of Object.entries(rankingsData)) {
+    for (const [position, formats] of Object.entries(rankingsData)) {
         try {
-            const positionID = await getOrCreate('positions', 'name', positionName, positionCache);
+            const positionID = await getOrCreate('positions', 'name', position, positionCache);
 
             for (const [formatName, tiers] of Object.entries(formats)) {
                 const formatID = await getOrCreate('scoring_formats', 'name', formatName, formatCache);
@@ -132,7 +126,7 @@ async function main() {
 
                         const payload = {
                             player: playerID,
-                            ranking_category: positionID,
+                            position: positionID,
                             format: formatID,
                             tier: tier,
                             week: week,
@@ -141,7 +135,7 @@ async function main() {
 
                         try {
                             await pb.collection('weekly_rankings').create(payload);
-                            console.log(`Successfully created ranking for: ${playerName} (Tier ${tier}, ${positionName}, ${formatName})`);
+                            console.log(`Successfully created ranking for: ${playerName} (Tier ${tier}, ${position}, ${formatName})`);
                         } catch (createError) {
                             console.warn(`Warning: Failed to create weekly ranking for ${playerName}:`, createError.message);
                         }
@@ -149,7 +143,7 @@ async function main() {
                 }
             }
         } catch (processError) {
-            console.error(`Error processing position ${positionName}:`, processError);
+            console.error(`Error processing position ${position}:`, processError);
         }
     }
 
