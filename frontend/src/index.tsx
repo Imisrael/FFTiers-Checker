@@ -11,9 +11,9 @@ import PocketBase from 'pocketbase';
 import RankingTable from './components/RankingTable';
 
 
-const tableMaking = (type: string) => (
+const tableMaking = (type: string, format: string) => (
   <div className='h-3/4 w-64 my-8' style={{ height: 700, width: 1000 }}>
-    <RankingTable type={type} />
+    <RankingTable type={type} format={format} />
   </div>
 )
 
@@ -24,8 +24,8 @@ const addButton = () => {
 
 export default function App() {
   const tableArr = [];
-  tableArr.push(tableMaking('big_board_rankings'));
-  tableArr.push(tableMaking('weekly_rankings'));
+  tableArr.push(tableMaking('big_board_rankings', "Standard"));
+  tableArr.push(tableMaking('weekly_rankings', "Standard"));
   const queryClient = new QueryClient();
   const persister = createAsyncStoragePersister({
     storage: window.localStorage,

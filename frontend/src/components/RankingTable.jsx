@@ -27,9 +27,9 @@ ModuleRegistry.registerModules([
 	ClientSideRowModelModule,
 ]);
 
-export default function RankingTable({ type }) {
+export default function RankingTable({ type, format }) {
 
-	console.log("Type: ", type)
+	console.log(type, format);
 
 	const pb = new PocketBase('http://127.0.0.1:8090');
 
@@ -47,7 +47,7 @@ export default function RankingTable({ type }) {
 	const { data, isLoading, isError, error } = useQuery({
 		queryKey: [type],
 		queryFn: async () => {
-			//const filter = `(player.name = '${playerName}' && (week = '0') && (ranking_category.name = 'RB' || ranking_category.name = 'Flex'))`;
+			//	const filter = `format.name = '${format}' `;
 			//	const filter = `(week = '0' && year = '2025')`;
 			const records = await pb.collection(type).getFullList({
 				//		filter: filter,
@@ -55,6 +55,7 @@ export default function RankingTable({ type }) {
 			});
 			return records;
 		},
+		enabled: !!format,
 	});
 
 	if (isLoading) {
@@ -77,7 +78,7 @@ export default function RankingTable({ type }) {
 	if (!data || data.length === 0) {
 		return (
 			<div className="text-center p-8 bg-gray-800 rounded-lg">
-				<p className="text-lg text-gray-300">No TE or Flex rankings found .</p>
+				<p className="text-lg text-gray-300">No Data Found.</p>
 			</div>
 		);
 	}
