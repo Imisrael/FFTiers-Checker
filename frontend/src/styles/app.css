@@ -1,1 +1,46 @@
 @import 'tailwindcss';
+
+/* Tier 1 - Light Blue */
+.tier-1 {
+  background-color: #eaf6ff;
+}
+
+/* Tier 2 - Light Green */
+.tier-2 {
+  background-color: #e6f5e9;
+}
+
+/* Tier 3 - Light Yellow */
+.tier-3 {
+  background-color: #fff9e6;
+}
+
+/* Tier 4 - Light Orange */
+.tier-4 {
+  background-color: #fff0e6;
+}
+
+/* Tier 5 - Light Purple */
+.tier-5 {
+  background-color: #f2e6ff;
+}
+
+/* Tier 6 - Light Pink */
+.tier-6 {
+  background-color: #ffebf0;
+}
+
+/* Tier 7 - Light Teal */
+.tier-7 {
+  background-color: #e6f9f7;
+}
+
+/* Tier 8 - Light Gray */
+.tier-8 {
+  background-color: #f0f0f0;
+}
+
+/* Tier 9 - Light Brown */
+.tier-9 {
+  background-color: #f5f0e9;
+}

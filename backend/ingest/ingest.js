@@ -113,10 +113,10 @@ async function main() {
     for (const [position, formats] of Object.entries(rankingsData)) {
         try {
             const positionID = await getOrCreate('positions', 'name', position, positionCache);
-
+            
             for (const [formatName, tiers] of Object.entries(formats)) {
                 const formatID = await getOrCreate('scoring_formats', 'name', formatName, formatCache);
-
+                let positionRank = 1;
                 for (let i = 0; i < tiers.length; i++) {
                     const tier = i + 1; // Tiers are 1-based
                     const playerNames = tiers[i].split(', ');
@@ -131,11 +131,13 @@ async function main() {
                             tier: tier,
                             week: week,
                             year: year,
+                            positionRank: positionRank
                         };
 
                         try {
                             await pb.collection('weekly_rankings').create(payload);
-                            console.log(`Successfully created ranking for: ${playerName} (Tier ${tier}, ${position}, ${formatName})`);
+                            console.log(`Successfully created ranking for: ${playerName} (Tier ${tier}, ${position}, ${formatName}), positonRank: ${positionRank}`);
+                            positionRank++;
                         } catch (createError) {
                             console.warn(`Warning: Failed to create weekly ranking for ${playerName}:`, createError.message);
                         }

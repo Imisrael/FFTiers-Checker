@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { AgGridReact } from 'ag-grid-react';
-
+import "../styles/app.css"
 import { useQuery } from '@tanstack/react-query';
 import PocketBase from 'pocketbase';
 
@@ -14,6 +14,7 @@ import {
 	TextFilterModule,
 	NumberFilterModule,
 	ClientSideRowModelModule,
+	RowStyleModule
 } from 'ag-grid-community';
 
 ModuleRegistry.registerModules([
@@ -25,26 +26,56 @@ ModuleRegistry.registerModules([
 	TextFilterModule,
 	NumberFilterModule,
 	ClientSideRowModelModule,
+	RowStyleModule
 ]);
 
-export default function RankingTable({ type, format }) {
+const pb = new PocketBase('http://127.0.0.1:8090');
 
-	console.log(type, format);
-
-	const pb = new PocketBase('http://127.0.0.1:8090');
+export default function RankingTable({ type }) {
 
 	const defaultColDef = useMemo(() => ({
 		filter: true // Enable filtering on all columns
 	}))
 
-	const [colDefs, setColDefs] = useState([
-		{ field: 'tier' },
-		{ field: 'expand.format.name', headerName: 'Format' },
-		{ field: 'expand.player.name', headerName: 'Name' },
-		{ field: 'expand.position.name', headerName: 'Position' },
-	]);
 
-	const { data, isLoading, isError, error } = useQuery({
+	const colDefs = useMemo(() => {
+		const rankingHeader = type === "weekly_rankings" ? 'positionRank' : 'overallRanking';
+
+
+		return [
+			{ field: 'tier', maxWidth: 100 },
+			{ field: 'expand.player.name', headerName: 'Name', },
+			{ field: 'expand.position.name', headerName: 'Position', maxWidth: 150, minWidth: 60 },
+			{ field: 'expand.format.name', headerName: 'Format', },
+
+			{ field: rankingHeader, headerName: 'Ranking', maxWidth: 200, minWidth: 60  },
+		];
+	}, [type]); // Dependency array ensures this runs when 'type' changes.
+
+	const rowClassRules = useMemo(() => {
+		return {
+			'tier-1': (params) => params.data.tier === 1,
+			'tier-2': (params) => params.data.tier === 2,
+			'tier-3': (params) => params.data.tier === 3,
+			'tier-4': (params) => params.data.tier === 4,
+			'tier-5': (params) => params.data.tier === 5,
+			'tier-6': (params) => params.data.tier === 6,
+			'tier-7': (params) => params.data.tier === 7,
+			'tier-8': (params) => params.data.tier === 8,
+			'tier-9': (params) => params.data.tier === 9,
+		};
+	}, []);
+
+	  const autoSizeStrategy = useMemo(() => {
+    return {
+      type: "fitGridWidth",
+      defaultMinWidth: 100,
+    };
+  }, []);
+
+
+
+	const { data = [], isLoading, isError, error } = useQuery({
 		queryKey: [type],
 		queryFn: async () => {
 			//	const filter = `format.name = '${format}' `;
@@ -55,7 +86,6 @@ export default function RankingTable({ type, format }) {
 			});
 			return records;
 		},
-		enabled: !!format,
 	});
 
 	if (isLoading) {
@@ -83,13 +113,7 @@ export default function RankingTable({ type, format }) {
 		);
 	}
 
-
-
 	console.log(data)
-
-
-
-
 
 	return (
 		<>
@@ -97,6 +121,8 @@ export default function RankingTable({ type, format }) {
 				rowData={data}
 				columnDefs={colDefs}
 				defaultColDef={defaultColDef}
+				rowClassRules={rowClassRules}
+				autoSizeStrategy={autoSizeStrategy}
 			/>
 		</>
 	);

@@ -21,7 +21,7 @@ const pb = new PocketBase(POCKETBASE_URL);
  */
 async function main() {
     try {
-        console.log('🚀 Starting ingestion process...');
+        console.log('Starting ingestion process...');
 
         // 1. Authenticate as admin
         console.log('Authenticating with PocketBase...');
@@ -48,7 +48,7 @@ async function main() {
         const playersMap = new Map(allPlayers.map(p => [p.name, p]));
         const scoringFormatsMap = new Map(allScoringFormats.map(sf => [sf.name, sf.id]));
 
-        console.log(`✅ Cached ${playersMap.size} players and ${scoringFormatsMap.size} scoring formats.`);
+        console.log(`Cached ${playersMap.size} players and ${scoringFormatsMap.size} scoring formats.`);
 
         // 4. Loop through the rankings data and create records
         console.log('Ingesting rankings...');
@@ -59,9 +59,10 @@ async function main() {
         for (const formatName in rankingsData) {
             console.log(`\n--- Processing format: ${formatName} ---`);
             const scoringFormatId = scoringFormatsMap.get(formatName);
+            let overallRanking = 1;
 
             if (!scoringFormatId) {
-                console.warn(`⚠️  Scoring format "${formatName}" not found in database. Skipping all its rankings.`);
+                console.warn(`Scoring format "${formatName}" not found in database. Skipping all its rankings.`);
                 continue;
             }
 
@@ -91,12 +92,14 @@ async function main() {
                         format: scoringFormatId,
                         position: positionId,
                         tier: tierNumber,
+                        overallRanking: overallRanking
                     };
 
                     try {
                         await pb.collection(BIG_BOARD_COLLECTION).create(dataToCreate);
-                        console.log(`- ✅ Created record for ${playerName} (Tier ${tierNumber})`);
+                        console.log(`- ✅ Created record for ${playerName} (Tier ${tierNumber}) (overallRanking: ${overallRanking})`);
                         createdCount++;
+                        overallRanking++;
                     } catch (createError) {
                         console.error(`- ❌ Failed to create record for ${playerName}:`, createError.message);
                     }
