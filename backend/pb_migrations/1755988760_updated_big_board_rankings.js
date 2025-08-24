@@ -1,0 +1,27 @@
+/// <reference path="../pb_data/types.d.ts" />
+migrate((app) => {
+  const collection = app.findCollectionByNameOrId("pbc_1069735522")
+
+  // add field
+  collection.fields.addAt(5, new Field({
+    "hidden": false,
+    "id": "number3590547027",
+    "max": null,
+    "min": null,
+    "name": "overallRanking",
+    "onlyInt": false,
+    "presentable": false,
+    "required": false,
+    "system": false,
+    "type": "number"
+  }))
+
+  return app.save(collection)
+}, (app) => {
+  const collection = app.findCollectionByNameOrId("pbc_1069735522")
+
+  // remove field
+  collection.fields.removeById("number3590547027")
+
+  return app.save(collection)
+})
