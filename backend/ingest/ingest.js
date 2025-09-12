@@ -4,7 +4,7 @@ import PocketBase from 'pocketbase';
 import fs from 'fs/promises';
 import path from 'path';
 
-const POCKETBASE_URL = 'http://127.0.0.1:8090';
+const POCKETBASE_URL = 'http://127.0.0.1:8091';
 const ADMIN_EMAIL = 'israelimru@gmail.com';
 const ADMIN_PASSWORD = 'bwd0fbt2exc-yqe7GEK';
 const JSON_FILE_PATH = '../../files/tiers.json';

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && docker compose -f /home/israel/docker/docker-compose.yml restart fftiers",
     "lint": "eslint .",
     "preview": "vite preview"
   },

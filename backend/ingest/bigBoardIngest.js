@@ -4,7 +4,7 @@ import fs from 'fs/promises';
 
 // --- CONFIGURATION ---
 // 👉 Replace with your PocketBase instance URL
-const POCKETBASE_URL = 'http://127.0.0.1:8090';
+const POCKETBASE_URL = 'http://127.0.0.1:8092';
 // 👉 Replace with your admin email and password
 const ADMIN_EMAIL = 'israelimru@gmail.com';
 const ADMIN_PASSWORD = 'bwd0fbt2exc-yqe7GEK';

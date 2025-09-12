@@ -29,10 +29,13 @@ ModuleRegistry.registerModules([
 	RowStyleModule
 ]);
 
-const pb = new PocketBase('http://127.0.0.1:8090');
+const pb = new PocketBase('https://fftiers.israelimru.com');
 
-export default function RankingTable({ type }) {
+export default function RankingTable({ type, onDataLoaded }) {
 
+      const [allRankings, setAllRankings] = useState([]);
+      const [selectedWeek, setSelectedWeek] = useState(2);
+        
 	const defaultColDef = useMemo(() => ({
 		filter: true // Enable filtering on all columns
 	}))
@@ -74,16 +77,17 @@ export default function RankingTable({ type }) {
   }, []);
 
 
-
 	const { data = [], isLoading, isError, error } = useQuery({
 		queryKey: [type],
 		queryFn: async () => {
 			//	const filter = `format.name = '${format}' `;
-			//	const filter = `(week = '0' && year = '2025')`;
+			//const filter = `(week = '2' && year = '2025')`;
 			const records = await pb.collection(type).getFullList({
-				//		filter: filter,
+			//	filter: filter,
 				expand: 'player,position,format',
 			});
+            setAllRankings(records);
+            onDataLoaded(records[0].updated)
 			return records;
 		},
 	});
@@ -115,10 +119,33 @@ export default function RankingTable({ type }) {
 
 	console.log(data)
 
+      const filteredRankings = allRankings.filter(
+        (ranking) => ranking.week === selectedWeek
+    );
+
+    const availableWeeks = [...new Set(allRankings.map((r) => r.week))].sort(
+        (a, b) => a - b
+    );
+
+
 	return (
 		<>
+      <div className="filter-controls">
+        <label htmlFor="week-select">Filter by Week: </label>
+        <select
+          id="week-select"
+          value={selectedWeek}
+          onChange={(e) => setSelectedWeek(Number(e.target.value))}
+        >
+          {availableWeeks.map((week) => (
+            <option key={week} value={week}>
+              Week {week}
+            </option>
+          ))}
+        </select>
+      </div>
 			<AgGridReact
-				rowData={data}
+				rowData={filteredRankings}
 				columnDefs={colDefs}
 				defaultColDef={defaultColDef}
 				rowClassRules={rowClassRules}
