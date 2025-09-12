@@ -161,32 +161,66 @@ func worker(uri string, wg *sync.WaitGroup, fullRankings *Rankings) {
 		position = formatPosition
 	}
 
-	resp, err := http.Get(uri)
+	req, err := http.NewRequest("GET", uri, nil)
+	if err != nil {
+		fmt.Println("Error with request: ", err)
+	}
+
+	etagPath := "./fetchTiers/cache/" + formatPosition + ".txt"
+	oldEtag, err := os.ReadFile(etagPath)
+	if err != nil {
+		fmt.Println("Error reading etag file: ", err)
+	}
+
+	if len(oldEtag) > 0 {
+		req.Header.Set("If-None-Match", string(oldEtag))
+		fmt.Printf("Checking with ETag: %s\n", string(oldEtag))
+	}
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println("Error!: ", err)
 	}
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("ERROR: ", err)
-	}
-	sb := string(body)
 
-	// Remove the word 'TIER' from each row
-	re := regexp.MustCompile(`[0-9]+\:\s`)
-	stringWithoutTier := strings.Split(sb, "Tier")
+	switch resp.StatusCode {
+	case http.StatusOK:
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("ERROR: ", err)
+		}
+		sb := string(body)
 
-	var tiers Tiers
-	for idx, val := range stringWithoutTier {
-		if idx != 0 {
-			tier := re.ReplaceAllString(val, "")
-			tier = strings.TrimSuffix(tier, "\n")
-			tier = strings.TrimPrefix(tier, " ")
-			tiers = append(tiers, tier)
+		newEtag := resp.Header.Get("Etag")
+		if newEtag != "" {
+			if err := os.WriteFile(etagPath, []byte(newEtag), 0644); err != nil {
+				fmt.Printf("Error writing etag file: %v\n", err)
+			}
+			fmt.Printf("Saved new ETag: %s\n", newEtag)
 		}
 
-	}
+		// Remove the word 'TIER' from each row
+		re := regexp.MustCompile(`[0-9]+\:\s`)
+		stringWithoutTier := strings.Split(sb, "Tier")
 
-	fullRankings.addScoringFormat(format, position, tiers)
+		var tiers Tiers
+		for idx, val := range stringWithoutTier {
+			if idx != 0 {
+				tier := re.ReplaceAllString(val, "")
+				tier = strings.TrimSuffix(tier, "\n")
+				tier = strings.TrimPrefix(tier, " ")
+				tiers = append(tiers, tier)
+			}
+
+		}
+
+		fullRankings.addScoringFormat(format, position, tiers)
+	case http.StatusNotModified:
+		fmt.Println("File not modified!")
+	default:
+		fmt.Printf("Received unexpected status code: %d\n", resp.StatusCode)
+	}
 
 }
 
