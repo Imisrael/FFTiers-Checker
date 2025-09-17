@@ -4,6 +4,7 @@ import PocketBase from 'pocketbase';
 import fs from 'fs/promises';
 import path from 'path';
 
+// --- CONFIGURATION ---
 const POCKETBASE_URL = 'http://127.0.0.1:8091';
 const ADMIN_EMAIL = 'israelimru@gmail.com';
 const ADMIN_PASSWORD = 'bwd0fbt2exc-yqe7GEK';
@@ -21,6 +22,37 @@ function getArgs() {
     return args;
 }
 
+// --- CLEANUP FUNCTION ---
+async function deleteAllRankingsForWeek(pb, week, year) {
+    console.log(`\nDeleting existing rankings for Week: ${week}, Year: ${year}...`);
+    try {
+        const records = await pb.collection('weekly_rankings').getFullList({
+            filter: `week = ${week} && year = ${year}`,
+            // --- Turn off autocancel for this bulk fetch operation ---
+            $autoCancel: false,
+        });
+
+        if (records.length === 0) {
+            console.log("No existing records found to delete.");
+            return;
+        }
+
+        console.log(`Found ${records.length} records to delete.`);
+
+        const deletePromises = records.map(record => pb.collection('weekly_rankings').delete(record.id, {
+             // --- Turn off autocancel for each delete operation ---
+            $autoCancel: false,
+        }));
+        
+        await Promise.all(deletePromises);
+
+        console.log("Successfully deleted all old records for the week.");
+    } catch (error) {
+        console.error("Error during cleanup:", error);
+        throw new Error("Failed to delete old records. Halting script.");
+    }
+}
+
 
 // --- MAIN SCRIPT LOGIC ---
 async function main() {
@@ -35,9 +67,12 @@ async function main() {
     }
 
     console.log(`Starting ingestion for Year: ${year}, Week: ${week}`);
-
-    // --- INITIALIZE POCKETBASE CLIENT ---
+    
+    // --- THIS IS THE CRITICAL FIX ---
+    // Initialize the client with auto-cancellation disabled globally
     const pb = new PocketBase(POCKETBASE_URL);
+    pb.autoCancellation(false);
+
 
     try {
         await pb.admins.authWithPassword(ADMIN_EMAIL, ADMIN_PASSWORD);
@@ -47,34 +82,30 @@ async function main() {
         process.exit(1);
     }
 
-    // --- READ AND PARSE JSON FILE ---
+    await deleteAllRankingsForWeek(pb, week, year);
+
     let rankingsData;
     try {
         const fileContent = await fs.readFile(path.resolve(JSON_FILE_PATH), 'utf-8');
         rankingsData = JSON.parse(fileContent);
-        console.log('Successfully parsed rankings.json file.');
+        console.log('\nSuccessfully parsed rankings.json file.');
     } catch (error) {
         console.error(`Error: Failed to read or parse JSON file at ${JSON_FILE_PATH}`, error);
         process.exit(1);
     }
 
-    // --- CACHES AND HELPERS ---
     const positionCache = new Map();
     const formatCache = new Map();
     const playerCache = new Map();
 
-    // Generic helper to find an existing record or create a new one.
     const getOrCreate = async (collection, field, value, cache) => {
-        if (cache.has(value)) {
-            return cache.get(value);
-        }
+        if (cache.has(value)) return cache.get(value);
         try {
             const record = await pb.collection(collection).getFirstListItem(`${field}="${value}"`);
             cache.set(value, record.id);
             return record.id;
         } catch (error) {
             if (error.status === 404) {
-                console.log(`Creating new record in '${collection}': ${value}`);
                 const newRecord = await pb.collection(collection).create({ [field]: value });
                 cache.set(value, newRecord.id);
                 return newRecord.id;
@@ -83,90 +114,63 @@ async function main() {
         }
     };
 
-    // Specialized version for players to handle the relation field.
     const getOrCreatePlayer = async (playerName, primaryPositionID) => {
-        if (playerCache.has(playerName)) {
-            return playerCache.get(playerName);
-        }
+        const cleanPlayerName = playerName.trim();
+        if (playerCache.has(cleanPlayerName)) return playerCache.get(cleanPlayerName);
+
+        const escapedName = cleanPlayerName.replace(/'/g, "''");
+        const filter = `name="${escapedName}"`;
         try {
-            const record = await pb.collection('players').getFirstListItem(`name="${playerName}"`);
-            playerCache.set(playerName, record.id);
+            const record = await pb.collection('players').getFirstListItem(filter);
+            playerCache.set(cleanPlayerName, record.id);
             return record.id;
         } catch (error) {
             if (error.status === 404) {
-                console.log(`Creating new player: ${playerName}`);
-                const newRecord = await pb.collection('players').create({
-                    name: playerName,
-                    position: primaryPositionID
-                });
-                playerCache.set(playerName, newRecord.id);
+                const newRecord = await pb.collection('players').create({ name: cleanPlayerName, position: primaryPositionID });
+                playerCache.set(cleanPlayerName, newRecord.id);
                 return newRecord.id;
             }
+            console.error(`Error finding/creating player: ${cleanPlayerName}`, error);
             throw error;
         }
     };
 
-    // --- NEW: UPSERT HELPER FOR WEEKLY RANKINGS ---
-    const upsertWeeklyRanking = async (payload) => {
-        // A unique ranking is defined by player, format, week, and year.
-        const filter = `player = "${payload.player}" && format = "${payload.format}" && week = ${payload.week} && year = ${payload.year}`;
-
-        try {
-            // 1. Try to find an existing ranking
-            const existingRecord = await pb.collection('weekly_rankings').getFirstListItem(filter);
-            
-            // 2. If found, UPDATE it with the new data
-            await pb.collection('weekly_rankings').update(existingRecord.id, payload);
-            console.log(`Updated ranking for: ${payload.playerName} (Tier ${payload.tier}), positionRank: ${payload.positionRank}`);
-        } catch (error) {
-            // 3. If NOT found (404 error), CREATE it
-            if (error.status === 404) {
-                await pb.collection('weekly_rankings').create(payload);
-                console.log(`Created ranking for: ${payload.playerName} (Tier ${payload.tier}), positionRank: ${payload.positionRank}`);
-            } else {
-                // For any other error, re-throw it to be handled by the main loop
-                throw error;
-            }
-        }
-    };
-
-
-    // --- DATA INGESTION LOGIC ---
     for (const [position, formats] of Object.entries(rankingsData)) {
         try {
             const positionID = await getOrCreate('positions', 'name', position, positionCache);
-            
             for (const [formatName, tiers] of Object.entries(formats)) {
                 const formatID = await getOrCreate('scoring_formats', 'name', formatName, formatCache);
                 let positionRank = 1;
 
                 for (let i = 0; i < tiers.length; i++) {
                     const tier = i + 1;
-                    const playerNames = tiers[i].split(', ');
+                    const playerNames = tiers[i].split(',').map(name => name.trim()).filter(Boolean);
+                    if (playerNames.length === 0) continue;
 
-                    for (const playerName of playerNames) {
-                        const playerID = await getOrCreatePlayer(playerName, positionID);
-
-                        // The payload now includes playerName for better logging
+                    console.log(`\nProcessing ${position} > ${formatName} > Tier ${tier} (${playerNames.length} players)...`);
+                    
+                    const createPromises = playerNames.map(async (playerName) => {
                         const payload = {
-                            player: playerID,
+                            player: await getOrCreatePlayer(playerName, positionID),
                             position: positionID,
                             format: formatID,
                             tier: tier,
                             week: week,
                             year: year,
-                            positionRank: positionRank,
-                            playerName: playerName // Helper field for logging, won't be saved in DB
+                            positionRank: positionRank++,
                         };
+                        return pb.collection('weekly_rankings').create(payload);
+                    });
 
-                        try {
-                            // --- MODIFIED: Use the upsert function instead of just create ---
-                            await upsertWeeklyRanking(payload);
-                            positionRank++;
-                        } catch (upsertError) {
-                            console.warn(`Warning: Failed to upsert weekly ranking for ${playerName}:`, upsertError.message);
+                    const results = await Promise.allSettled(createPromises);
+                    
+                    results.forEach((result, index) => {
+                        if (result.status === 'rejected') {
+                            console.warn(`\t- Failed to process player "${playerNames[index]}":`, result.reason?.message || result.reason);
                         }
-                    }
+                    });
+
+                    console.log(`\t...Tier ${tier} completed.`);
                 }
             }
         } catch (processError) {
