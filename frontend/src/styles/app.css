@@ -1,5 +1,10 @@
 @import 'tailwindcss';
 
+select option {
+  background: #334155; /* Corresponds to slate-700 */
+  color: white;
+}
+
 /* Tier 1 - Light Blue */
 .tier-1 {
   background-color: #eaf6ff;

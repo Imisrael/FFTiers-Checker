@@ -10,11 +10,21 @@ CURRENT_WEEK=$(( WEEKS_PASSED + 1 ))
 CURRENT_YEAR=$(date +%Y)
 TARGET_FILE="${today}_tiers.json"
 
-echo "Running ingest for Year: $CURRENT_YEAR, Week: $CURRENT_WEEK"
 
-cd /home/israel/development/FFTiers-Checker/backend && ./update && cd ../files
+echo "Checking for new data for Year: $CURRENT_YEAR, Week: $CURRENT_WEEK"
 
-if [ -f "$TARGET_FILE" ]; then 
-    ln -sfn "$TARGET_FILE" tiers.json &&
-    cd ../backend/ingest && node upsert.js --week=$CURRENT_WEEK --year=$CURRENT_YEAR
-fi 
+# Change to the backend directory
+cd /home/israel/development/FFTiers-Checker/backend
+
+# Run the Go program and check its exit code
+if ./update; then
+    # This block only runs if ./update exits with 0 (success)
+    echo "New data found. Updating database..."
+    cd ../files
+    ln -sfn "$TARGET_FILE" tiers.json
+    cd ../backend/ingest
+    node upsert.js --week=$CURRENT_WEEK --year=$CURRENT_YEAR
+else
+    # This block runs if ./update exits with a non-zero code
+    echo "No new data. Skipping database update."
+fi

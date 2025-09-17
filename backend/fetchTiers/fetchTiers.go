@@ -258,8 +258,16 @@ func Get() {
 		if err != nil {
 			fmt.Println("Error writing to file")
 		}
+
 		f.Sync()
 		defer f.Close()
+
+		// Exit with 0 to indicate successful new json file
+		// this indicates to the bash script to go ahead and update DB
+		os.Exit(0)
+	} else {
+		// No Update -- don't run script!
+		os.Exit(1)
 	}
 }
 
