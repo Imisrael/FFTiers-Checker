@@ -34,8 +34,9 @@ const pb = new PocketBase('https://fftiers.israelimru.com');
 export default function RankingTable({ type, onDataLoaded }) {
 
       const [allRankings, setAllRankings] = useState([]);
-      const [selectedWeek, setSelectedWeek] = useState(2);
-        
+      const [selectedWeek, setSelectedWeek] = useState(3);
+      const [currentWeek, setCurrentWeek] = useState(3);    
+
 	const defaultColDef = useMemo(() => ({
 		filter: true // Enable filtering on all columns
 	}))
@@ -87,7 +88,10 @@ export default function RankingTable({ type, onDataLoaded }) {
 				expand: 'player,position,format',
 			});
             setAllRankings(records);
-            onDataLoaded(records[0].updated)
+            const numOfRecords = records.length;
+            const currentWeek = records[numOfRecords-1].week;
+            setCurrentWeek(currentWeek);
+            onDataLoaded(records[numOfRecords-1].updated)
 			return records;
 		},
 	});
@@ -119,13 +123,18 @@ export default function RankingTable({ type, onDataLoaded }) {
 
 	console.log(data)
 
-      const filteredRankings = allRankings.filter(
+    const filteredRankings = allRankings.filter(
         (ranking) => ranking.week === selectedWeek
     );
 
     const availableWeeks = [...new Set(allRankings.map((r) => r.week))].sort(
         (a, b) => a - b
     );
+
+  //  useEffect(() => {
+       // setSelectedWeek(currentWeek)
+ //       console.log("urrent week: ", current);
+ //   }, [currentWeek])
 
 
 	return (

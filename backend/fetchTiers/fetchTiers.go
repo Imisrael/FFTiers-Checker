@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -243,20 +244,23 @@ func Get() {
 		}
 	}
 	wg.Wait()
-	b, err := json.MarshalIndent(fullRankings, "", "  ")
-	if err != nil {
-		fmt.Println("Marshaling error!", err)
+	// Check if struct is actually populated before trying to write file
+	if !(reflect.ValueOf(fullRankings).IsZero()) {
+		b, err := json.MarshalIndent(fullRankings, "", "  ")
+		if err != nil {
+			fmt.Println("Marshaling error!", err)
+		}
+		f, err := os.Create("../files/" + dateString + "_tiers" + fileName + ".json")
+		if err != nil {
+			fmt.Println("Error creating file")
+		}
+		_, err = f.WriteString(string(b))
+		if err != nil {
+			fmt.Println("Error writing to file")
+		}
+		f.Sync()
+		defer f.Close()
 	}
-	f, err := os.Create("../files/" + dateString + "_tiers" + fileName + ".json")
-	if err != nil {
-		fmt.Println("Error creating file")
-	}
-	_, err = f.WriteString(string(b))
-	if err != nil {
-		fmt.Println("Error writing to file")
-	}
-	f.Sync()
-	defer f.Close()
 }
 
 func bigBoardWorker(uri string, bigBoardRankings *ScoringFormats) {
