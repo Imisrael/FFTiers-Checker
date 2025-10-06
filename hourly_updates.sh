@@ -1,6 +1,6 @@
 #!/bin/bash
 
-today=$(date '+%Y-%-m-%d')
+today=$(date '+%Y-%m-%d')
 SEASON_START_DATE="2025-09-02"
 CURRENT_SECONDS=$(date +%s)
 START_SECONDS=$(date -d "$SEASON_START_DATE" +%s)
