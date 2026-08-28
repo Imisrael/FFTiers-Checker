@@ -1,13 +1,14 @@
 // ingest.js
 import PocketBase from 'pocketbase';
 import fs from 'fs/promises';
+import 'dotenv/config'
 
 // --- CONFIGURATION ---
 // 👉 Replace with your PocketBase instance URL
-const POCKETBASE_URL = 'http://127.0.0.1:8092';
+const POCKETBASE_URL = 'http://127.0.0.1:8091';
 // 👉 Replace with your admin email and password
 const ADMIN_EMAIL = 'israelimru@gmail.com';
-const ADMIN_PASSWORD = 'bwd0fbt2exc-yqe7GEK';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 // The name of your big board collection
 const BIG_BOARD_COLLECTION = 'big_board_rankings';

@@ -226,8 +226,8 @@ func worker(uri string, wg *sync.WaitGroup, fullRankings *Rankings) {
 }
 
 func Get() {
-	now := time.Now()
-	dateString := strconv.Itoa(now.Year()) + "-" + strconv.Itoa(int(now.Month())) + "-" + strconv.Itoa(now.Day())
+	dateString := time.Now().Format("2006-01-02")
+	//	dateString := strconv.Itoa(now.Year()) + "-" + strconv.Itoa(int(now.Month())) + "-" + strconv.Itoa(now.Day())
 
 	var fileName = ""
 	mUrls := make(mapOfUrls)

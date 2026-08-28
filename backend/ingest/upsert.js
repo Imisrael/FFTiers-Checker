@@ -3,11 +3,12 @@
 import PocketBase from 'pocketbase';
 import fs from 'fs/promises';
 import path from 'path';
+import 'dotenv/config'
 
 // --- CONFIGURATION ---
 const POCKETBASE_URL = 'http://127.0.0.1:8091';
 const ADMIN_EMAIL = 'israelimru@gmail.com';
-const ADMIN_PASSWORD = 'bwd0fbt2exc-yqe7GEK';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 const JSON_FILE_PATH = '../../files/tiers.json';
 
 // --- HELPER TO PARSE COMMAND-LINE ARGUMENTS ---
@@ -40,10 +41,10 @@ async function deleteAllRankingsForWeek(pb, week, year) {
         console.log(`Found ${records.length} records to delete.`);
 
         const deletePromises = records.map(record => pb.collection('weekly_rankings').delete(record.id, {
-             // --- Turn off autocancel for each delete operation ---
+            // --- Turn off autocancel for each delete operation ---
             $autoCancel: false,
         }));
-        
+
         await Promise.all(deletePromises);
 
         console.log("Successfully deleted all old records for the week.");
@@ -67,7 +68,7 @@ async function main() {
     }
 
     console.log(`Starting ingestion for Year: ${year}, Week: ${week}`);
-    
+
     // --- THIS IS THE CRITICAL FIX ---
     // Initialize the client with auto-cancellation disabled globally
     const pb = new PocketBase(POCKETBASE_URL);
@@ -148,7 +149,7 @@ async function main() {
                     if (playerNames.length === 0) continue;
 
                     console.log(`\nProcessing ${position} > ${formatName} > Tier ${tier} (${playerNames.length} players)...`);
-                    
+
                     const createPromises = playerNames.map(async (playerName) => {
                         const payload = {
                             player: await getOrCreatePlayer(playerName, positionID),
@@ -163,7 +164,7 @@ async function main() {
                     });
 
                     const results = await Promise.allSettled(createPromises);
-                    
+
                     results.forEach((result, index) => {
                         if (result.status === 'rejected') {
                             console.warn(`\t- Failed to process player "${playerNames[index]}":`, result.reason?.message || result.reason);

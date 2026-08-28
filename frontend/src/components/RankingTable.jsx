@@ -40,6 +40,8 @@ export default function RankingTable({ type, onDataLoaded }) {
   const [currentWeek, setCurrentWeek] = useState(0);
   const [selectedFormat, setSelectedFormat] = useState("Standard");
   const [selectedPosition, setSelectedPositon] = useState("all");
+  
+  const myTeam = ["Ja'Marr Chase","Drake London","Ladd McConkey","Davante Adams","TreVeyon Henderson","Tony Pollard","Chris Godwin Jr.","Ricky Pearsall","Rhamondre Stevenson","Jared Goff","Brenton Strange","Troy Franklin","49ers","Jeremy McNichols"];
 
   const defaultColDef = useMemo(() => ({
     filter: true // Enable filtering on all columns
@@ -145,7 +147,7 @@ export default function RankingTable({ type, onDataLoaded }) {
 
   const formatAgnosticPositions = ['QB', 'K', 'DST'];
 
-  const filteredRankings = allRankings.filter((ranking) => {
+  let filteredRankings = allRankings.filter((ranking) => {
     const isMatchingWeek = ranking.week === selectedWeek;
     const isMatchingFormat = ranking.expand.format.name === selectedFormat;
     const isAgnosticPosition = formatAgnosticPositions.includes(ranking.expand.position.name);
@@ -157,6 +159,16 @@ export default function RankingTable({ type, onDataLoaded }) {
 
     return isMatchingWeek && matchesFormatLogic && matchesPositionLogic;
   });
+
+    let superFilter;
+    if (myTeam.length > 0) {
+        console.log(myTeam)
+        superFilter = filteredRankings.filter((ranking) => {
+            const isMatchingPlayers = myTeam.includes(ranking.expand.player.name);
+            return isMatchingPlayers;
+        })
+        console.log(superFilter);
+    }
 
 
   const availableWeeks = [...new Set(allRankings.map((r) => r.week))].sort(

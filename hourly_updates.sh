@@ -1,13 +1,23 @@
 #!/bin/bash
 
 today=$(date '+%Y-%m-%d')
-SEASON_START_DATE="2025-09-02"
+SEASON_START_DATE="2026-09-08"
 CURRENT_SECONDS=$(date +%s)
 START_SECONDS=$(date -d "$SEASON_START_DATE" +%s)
 SECONDS_IN_A_WEEK=$((7 * 24 * 60 * 60))
-WEEKS_PASSED=$(( (CURRENT_SECONDS - START_SECONDS) / SECONDS_IN_A_WEEK ))
-CURRENT_WEEK=$(( WEEKS_PASSED + 1 ))
+
+if (( CURRENT_SECONDS < START_SECONDS )); then
+    # preseason, file it under week 1
+    CURRENT_WEEK=1
+else
+    CURRENT_WEEK=$(( (CURRENT_SECONDS - START_SECONDS) / SECONDS_IN_A_WEEK + 1 ))
+    (( CURRENT_WEEK > 18 )) && CURRENT_WEEK=18
+fi
+
+CURRENT_MONTH=$(date +%-m)
 CURRENT_YEAR=$(date +%Y)
+(( CURRENT_MONTH < 3 )) && CURRENT_YEAR=$(( CURRENT_YEAR - 1 ))
+
 TARGET_FILE="${today}_tiers.json"
 
 

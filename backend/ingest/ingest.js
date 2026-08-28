@@ -3,10 +3,11 @@
 import PocketBase from 'pocketbase';
 import fs from 'fs/promises';
 import path from 'path';
+import 'dotenv/config'
 
 const POCKETBASE_URL = 'http://127.0.0.1:8091';
 const ADMIN_EMAIL = 'israelimru@gmail.com';
-const ADMIN_PASSWORD = 'bwd0fbt2exc-yqe7GEK';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 const JSON_FILE_PATH = '../../files/tiers.json';
 
 // --- HELPER TO PARSE COMMAND-LINE ARGUMENTS ---
@@ -113,7 +114,7 @@ async function main() {
     for (const [position, formats] of Object.entries(rankingsData)) {
         try {
             const positionID = await getOrCreate('positions', 'name', position, positionCache);
-            
+
             for (const [formatName, tiers] of Object.entries(formats)) {
                 const formatID = await getOrCreate('scoring_formats', 'name', formatName, formatCache);
                 let positionRank = 1;

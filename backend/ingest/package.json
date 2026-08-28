@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "dotenv": "^17.4.2",
     "pocketbase": "^0.26.2"
   },
   "type": "module"

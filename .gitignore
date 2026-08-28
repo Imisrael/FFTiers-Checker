@@ -29,6 +29,7 @@ pocketbase
 pocketbase.exe
 pb_logs/
 
+
 node_modules
 build
 npm-debug.log
