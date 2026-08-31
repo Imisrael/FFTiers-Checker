@@ -9,7 +9,7 @@ import 'dotenv/config'
 const POCKETBASE_URL = 'http://127.0.0.1:8091';
 const ADMIN_EMAIL = 'israelimru@gmail.com';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-const JSON_FILE_PATH = '../../files/tiers.json';
+const JSON_FILE_PATH = '../../files/big_board_tiers.json';
 
 // --- HELPER TO PARSE COMMAND-LINE ARGUMENTS ---
 function getArgs() {

@@ -19,6 +19,7 @@ CURRENT_YEAR=$(date +%Y)
 (( CURRENT_MONTH < 3 )) && CURRENT_YEAR=$(( CURRENT_YEAR - 1 ))
 
 TARGET_FILE="${today}_tiers.json"
+BIGBOARD_FILE="${today}_bigBoard.json"
 
 
 echo "Checking for new data for Year: $CURRENT_YEAR, Week: $CURRENT_WEEK"
@@ -32,8 +33,10 @@ if ./update; then
     echo "New data found. Updating database..."
     cd ../files
     ln -sfn "$TARGET_FILE" tiers.json
+    ln -sfn "$BIGBOARD_FILE" big_board_tiers.json
     cd ../backend/ingest
     node upsert.js --week=$CURRENT_WEEK --year=$CURRENT_YEAR
+    node bigBoardIngest.js
 else
     # This block runs if ./update exits with a non-zero code
     echo "No new data. Skipping database update."
