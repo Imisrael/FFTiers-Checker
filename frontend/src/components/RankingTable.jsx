@@ -1,7 +1,8 @@
 /* eslint-disable react/react-in-jsx-scope */
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import "../styles/app.css"
+import { TIER_COLORS } from "../utils/constants.js"
 import { useQuery } from '@tanstack/react-query';
 import PocketBase from 'pocketbase';
 
@@ -40,27 +41,37 @@ export default function RankingTable({ type, onDataLoaded }) {
   const [currentWeek, setCurrentWeek] = useState(0);
   const [selectedFormat, setSelectedFormat] = useState("Standard");
   const [selectedPosition, setSelectedPositon] = useState("all");
-  
-  const myTeam = ["Ja'Marr Chase","Drake London","Ladd McConkey","Davante Adams","TreVeyon Henderson","Tony Pollard","Chris Godwin Jr.","Ricky Pearsall","Rhamondre Stevenson","Jared Goff","Brenton Strange","Troy Franklin","49ers","Jeremy McNichols"];
+
+  const [removedIds, setRemovedIds] = useState(() => {
+    const saved = localStorage.getItem('removedIds');
+    return new Set(saved ? JSON.parse(saved) : []);
+  });
+
+  const [removedView, setRemovedView] = useState('hide'); // 'hide' | 'strike' | 'table'
 
   const defaultColDef = useMemo(() => ({
     filter: true // Enable filtering on all columns
   }))
 
+  useEffect(() => {
+    localStorage.setItem('removedIds', JSON.stringify([...removedIds]));
+  }, [removedIds]);
+
+
 
   const colDefs = useMemo(() => {
-    const rankingHeader = 'positionRank';
-
+    // const rankingHeader = 'positionRank';
+    const rankingHeader = 'overallRanking';
     const columns = [
       { field: 'tier', maxWidth: 100 },
       {
         field: 'expand.player.name',
         headerName: 'Name',
         flex: 1,
-        minWidth: 150 
+        minWidth: 150
       },
-      
-      { field: rankingHeader, headerName: 'Ranking', maxWidth: 200, minWidth: 60 },
+
+      { field: rankingHeader, headerName: 'Overall Ranking', maxWidth: 200, minWidth: 60 },
     ];
 
     if (selectedPosition === 'all') {
@@ -74,19 +85,68 @@ export default function RankingTable({ type, onDataLoaded }) {
     return columns;
   }, [type, selectedPosition]);
 
-  const rowClassRules = useMemo(() => {
+  const { data = [], isLoading, isError, error } = useQuery({
+    queryKey: [type],
+    queryFn: async () => {
+      //	const filter = `format.name = '${format}' `;
+      // const filter = `(week = '1' && year = '2026')`;
+      const records = await pb.collection(type).getFullList({
+        //  filter: filter,
+        expand: 'player,position,format, overallRanking',
+      });
+      setAllRankings(records);
+      const numOfRecords = records.length;
+      const currentWeek = records[numOfRecords - 1].week;
+      setCurrentWeek(currentWeek);
+      onDataLoaded(records[numOfRecords - 1].updated)
+      return records;
+    },
+  });
+  const getRowId = useCallback((params) => params.data.id, []);
+
+  const { filteredRankings, removedRankings, tierStarts } = useMemo(() => {
+    const base = allRankings.filter((ranking) => {
+      if (!ranking.expand) return false;
+      if (removedView === 'hide' && removedIds.has(ranking.id)) return false;
+
+      const isMatchingWeek = ranking.week === selectedWeek;
+      const matchesFormatLogic = ranking.expand.format.name === selectedFormat;
+      const matchesPositionLogic =
+        selectedPosition === 'all' ||
+        ranking.expand.position.name === selectedPosition;
+
+      return isMatchingWeek && matchesFormatLogic && matchesPositionLogic && ranking.overallRanking;
+    });
+
+    const starts = new Set();
+    let lastTier = null;
+    for (const r of [...base].sort((a, b) => a.overallRanking - b.overallRanking)) {
+      if (r.tier !== lastTier) {
+        starts.add(r.id);
+        lastTier = r.tier;
+      }
+    }
+
+    const removed = base.filter((r) => removedIds.has(r.id));
+    const main = removedView === 'table' ? base.filter((r) => !removedIds.has(r.id)) : base;
+
+    return { filteredRankings: main, removedRankings: removed, tierStarts: starts };
+  }, [allRankings, removedIds, removedView, selectedWeek, selectedFormat, selectedPosition]);
+
+  const rowClassRules = useMemo(() => ({
+    'row-removed': (p) => removedIds.has(p.data.id) && removedView === 'strike',
+  }), [removedIds, removedView]);
+
+  const getRowStyle = useCallback((params) => {
+    const tier = params.data?.tier;
+    if (!tier) return undefined;
     return {
-      'tier-1': (params) => params.data.tier === 1,
-      'tier-2': (params) => params.data.tier === 2,
-      'tier-3': (params) => params.data.tier === 3,
-      'tier-4': (params) => params.data.tier === 4,
-      'tier-5': (params) => params.data.tier === 5,
-      'tier-6': (params) => params.data.tier === 6,
-      'tier-7': (params) => params.data.tier === 7,
-      'tier-8': (params) => params.data.tier === 8,
-      'tier-9': (params) => params.data.tier === 9,
+      backgroundColor: TIER_COLORS[(tier - 1) % TIER_COLORS.length],
+      borderTop: tierStarts.has(params.data.id) ? '2px solid #1e293b' : undefined,
     };
-  }, []);
+  }, [tierStarts]);
+
+
 
   const autoSizeStrategy = useMemo(() => {
     return {
@@ -100,23 +160,23 @@ export default function RankingTable({ type, onDataLoaded }) {
   }, [currentWeek])
 
 
-  const { data = [], isLoading, isError, error } = useQuery({
-    queryKey: [type],
-    queryFn: async () => {
-      //	const filter = `format.name = '${format}' `;
-      //const filter = `(week = '2' && year = '2025')`;
-      const records = await pb.collection(type).getFullList({
-        //	filter: filter,
-        expand: 'player,position,format',
-      });
-      setAllRankings(records);
-      const numOfRecords = records.length;
-      const currentWeek = records[numOfRecords - 1].week;
-      setCurrentWeek(currentWeek);
-      onDataLoaded(records[numOfRecords - 1].updated)
-      return records;
-    },
-  });
+
+
+
+
+  //console.log(data)
+
+
+  const availableWeeks = [...new Set(allRankings.map((r) => r.week))].sort(
+    (a, b) => a - b
+  );
+
+  const availableFormats = [...new Set(allRankings.map((r) => r.expand.format.name))];
+  const availablePositions = [...new Set(allRankings.map((r) => r.expand.position.name))];
+  console.log(filteredRankings.map(r => ({ id: r.id, name: r.expand.player.name, format: r.expand.format.name, created: r.created })));
+
+
+
 
   if (isLoading) {
     return (
@@ -143,64 +203,9 @@ export default function RankingTable({ type, onDataLoaded }) {
     );
   }
 
-  console.log(data)
-
-  const formatAgnosticPositions = ['QB', 'K', 'DST'];
-
-  let filteredRankings = allRankings.filter((ranking) => {
-    const isMatchingWeek = ranking.week === selectedWeek;
-    const isMatchingFormat = ranking.expand.format.name === selectedFormat;
-    const isAgnosticPosition = formatAgnosticPositions.includes(ranking.expand.position.name);
-    const matchesFormatLogic = isMatchingFormat || isAgnosticPosition;
-
-    const matchesPositionLogic =
-      selectedPosition === 'all' ||
-      ranking.expand.position.name === selectedPosition;
-
-    return isMatchingWeek && matchesFormatLogic && matchesPositionLogic;
-  });
-
-    let superFilter;
-    if (myTeam.length > 0) {
-        console.log(myTeam)
-        superFilter = filteredRankings.filter((ranking) => {
-            const isMatchingPlayers = myTeam.includes(ranking.expand.player.name);
-            return isMatchingPlayers;
-        })
-        console.log(superFilter);
-    }
-
-
-  const availableWeeks = [...new Set(allRankings.map((r) => r.week))].sort(
-    (a, b) => a - b
-  );
-
-  const availableFormats = [...new Set(allRankings.map((r) => r.expand.format.name))];
-  const availablePositions = [...new Set(allRankings.map((r) => r.expand.position.name))];
-
-
   return (
-    <>
-      <div className="flex flex-col items-stretch space-y-4 md:flex-row md:items-center md:space-y-0 md:space-x-6 mb-4">
-        {/* Filter Group 1: Week */}
-        <div className="flex items-center space-x-2">
-          <label htmlFor="week-select" className="text-sm font-medium text-gray-300">
-            Filter by Week:
-          </label>
-          <select
-            id="week-select"
-            value={selectedWeek}
-            onChange={(e) => setSelectedWeek(Number(e.target.value))}
-            className="w-full rounded-md border-slate-600 bg-slate-700 px-3 py-1.5 pr-8 text-sm font-medium text-white shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 md:w-auto appearance-none bg-no-repeat bg-right-1.5 bg-[length:1.2em_1.2em] bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24%22 fill=%22%239ca3af%22><path d=%22M11.9997 13.1714L16.9495 8.22168L18.3637 9.63589L11.9997 15.9999L5.63574 9.63589L7.04996 8.22168L11.9997 13.1714Z%22></path></svg>')]"
-          >
-            {availableWeeks.map((week) => (
-              <option key={week} value={week}>
-                Week {week}
-              </option>
-            ))}
-          </select>
-        </div>
-
+    <div className="flex flex-col h-full min-w-0">
+      <div className="flex flex-col items-stretch space-y-4 md:flex-row md:items-center md:space-y-0 md:space-x-6 mb-4 mt-4 flex-wrap shrink-0">
         {/* Filter Group 2: Scoring Format */}
         <div className="flex items-center space-x-2">
           <label htmlFor="format-select" className="text-sm font-medium text-gray-300">
@@ -241,14 +246,78 @@ export default function RankingTable({ type, onDataLoaded }) {
             ))}
           </select>
         </div>
+
+        {/* Filter Group 4: Removed */}
+        <div className="flex items-center space-x-2">
+          <label className="text-sm font-medium text-gray-300">Removed</label>
+          <select
+            value={removedView}
+            onChange={(e) => setRemovedView(e.target.value)}
+            className="rounded-md border-slate-600 bg-slate-700 px-3 py-1.5 text-sm text-white"
+          >
+            <option value="hide">Hidden</option>
+            <option value="strike">Struck out</option>
+            <option value="table">Separate table</option>
+          </select>
+        </div>
+
+        {removedIds.size > 0 && (
+          <button
+            onClick={() => confirm('Restore all removed players?') && setRemovedIds(new Set())}
+            className="rounded-md bg-slate-700 hover:bg-red-600 px-3 py-1.5 text-sm font-medium text-white transition-colors"
+          >
+            Restore all ({removedIds.size})
+          </button>
+        )}
       </div>
-      <AgGridReact
-        rowData={filteredRankings}
-        columnDefs={colDefs}
-        defaultColDef={defaultColDef}
-        rowClassRules={rowClassRules}
-        autoSizeStrategy={autoSizeStrategy}
-      />
-    </>
+
+      {/* Grids */}
+      <div className={`flex-1 min-h-0 ${removedView === 'table' ? 'flex gap-4' : ''}`}>
+        <div className="flex-1 min-w-0 h-full">
+          <AgGridReact
+            rowData={filteredRankings}
+            columnDefs={colDefs}
+            defaultColDef={defaultColDef}
+            getRowId={getRowId}
+            getRowStyle={getRowStyle}
+            rowClassRules={rowClassRules}
+            autoSizeStrategy={autoSizeStrategy}
+            onRowDoubleClicked={(event) => {
+              setRemovedIds((prev) => {
+                const next = new Set(prev);
+                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+                next.has(event.data.id) ? next.delete(event.data.id) : next.add(event.data.id);
+                return next;
+              });
+            }}
+          />
+        </div>
+
+        {removedView === 'table' && removedRankings.length > 0 && (
+          <div className="w-72 shrink-0 h-full flex flex-col">
+            <h3 className="text-sm font-medium text-gray-400 mb-2 shrink-0">
+              ☠️ Removed ({removedRankings.length}) — double click to restore
+            </h3>
+            <div className="dead-grid flex-1 min-h-0">
+              <AgGridReact
+                rowData={removedRankings}
+                columnDefs={colDefs}
+                defaultColDef={defaultColDef}
+                getRowId={getRowId}
+                getRowStyle={getRowStyle}
+                rowClassRules={rowClassRules}
+                onRowDoubleClicked={(event) => {
+                  setRemovedIds((prev) => {
+                    const next = new Set(prev);
+                    next.delete(event.data.id);
+                    return next;
+                  });
+                }}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
