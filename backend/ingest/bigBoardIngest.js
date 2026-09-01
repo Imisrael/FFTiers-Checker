@@ -1,6 +1,7 @@
 // ingest.js
 import PocketBase from 'pocketbase';
 import fs from 'fs/promises';
+import { BIG_BOARD_FILE } from './paths.js';
 import 'dotenv/config'
 
 // --- CONFIGURATION ---
@@ -30,9 +31,16 @@ async function main() {
         console.log('✅ Authentication successful.');
 
         // 2. Load the rankings data from the JSON file
-        console.log('Reading rankings.json file...');
-        const rankingsData = JSON.parse(await fs.readFile('../../files/big_board_tiers.json', 'utf-8'));
+        console.log('Reading big_board_tiers.json file...');
+        const rankingsData = JSON.parse(await fs.readFile(BIG_BOARD_FILE, 'utf-8'));
         console.log('✅ JSON file loaded.');
+
+        console.log('Clearing existing big board rankings...');
+        const existing = await pb.collection(BIG_BOARD_COLLECTION).getFullList();
+        for (const rec of existing) {
+            await pb.collection(BIG_BOARD_COLLECTION).delete(rec.id);
+        }
+        console.log(`Deleted ${existing.length} records.`);
 
         // 3. Cache related collections for performance
         // This is MUCH faster than querying for each player/format inside the loop.
@@ -102,7 +110,7 @@ async function main() {
                         createdCount++;
                         overallRanking++;
                     } catch (createError) {
-                        console.error(`- ❌ Failed to create record for ${playerName}:`, createError.message);
+                        console.error(`- Failed: ${playerName}:`, JSON.stringify(createError.response?.data ?? createError.data));
                     }
                 }
             }

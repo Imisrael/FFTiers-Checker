@@ -1,4 +1,8 @@
 #!/bin/bash
+set -uo pipefail
+
+BACKEND=/home/israel/development/FFTiers-Checker/backend
+export FFT_ROOT="$BACKEND"
 
 today=$(date '+%Y-%m-%d')
 SEASON_START_DATE="2026-09-08"
@@ -18,26 +22,27 @@ CURRENT_MONTH=$(date +%-m)
 CURRENT_YEAR=$(date +%Y)
 (( CURRENT_MONTH < 3 )) && CURRENT_YEAR=$(( CURRENT_YEAR - 1 ))
 
+OUT_DIR="$BACKEND/data/out"
 TARGET_FILE="${today}_tiers.json"
-BIGBOARD_FILE="${today}_bigBoard.json"
-
+BIGBOARD_FILE="${today}_tiers_bigBoard.json"
 
 echo "Checking for new data for Year: $CURRENT_YEAR, Week: $CURRENT_WEEK"
 
-# Change to the backend directory
-cd /home/israel/development/FFTiers-Checker/backend
+cd "$BACKEND" || exit 1
 
-# Run the Go program and check its exit code
-if ./update; then
-    # This block only runs if ./update exits with 0 (success)
+if ./bin/update; then
     echo "New data found. Updating database..."
-    cd ../files
-    ln -sfn "$TARGET_FILE" tiers.json
-    ln -sfn "$BIGBOARD_FILE" big_board_tiers.json
-    cd ../backend/ingest
-    node upsert.js --week=$CURRENT_WEEK --year=$CURRENT_YEAR
+
+    cd "$OUT_DIR" || exit 1
+    [[ -f "$TARGET_FILE" ]]   && ln -sfn "$TARGET_FILE" tiers.json
+    [[ -f "$BIGBOARD_FILE" ]] && ln -sfn "$BIGBOARD_FILE" big_board_tiers.json
+
+
+    cd "$BACKEND/ingest" || exit 1
+    [[ -e "$OUT_DIR/tiers.json" ]] || { echo "tiers.json symlink broken"; exit 1; }
+    [[ -e "$OUT_DIR/big_board_tiers.json" ]] || { echo "big_board symlink broken"; exit 1; }
+    node upsert.js --week="$CURRENT_WEEK" --year="$CURRENT_YEAR"
     node bigBoardIngest.js
 else
-    # This block runs if ./update exits with a non-zero code
     echo "No new data. Skipping database update."
 fi

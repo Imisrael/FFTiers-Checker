@@ -3,13 +3,14 @@
 import PocketBase from 'pocketbase';
 import fs from 'fs/promises';
 import path from 'path';
+import { TIERS_FILE } from './paths.js';
 import 'dotenv/config'
 
 // --- CONFIGURATION ---
 const POCKETBASE_URL = 'http://127.0.0.1:8091';
 const ADMIN_EMAIL = 'israelimru@gmail.com';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-const JSON_FILE_PATH = '../../files/big_board_tiers.json';
+const JSON_FILE_PATH = TIERS_FILE;
 
 // --- HELPER TO PARSE COMMAND-LINE ARGUMENTS ---
 function getArgs() {

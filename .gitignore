@@ -24,12 +24,6 @@ go.work.sum
 # env file
 .env
 
-pb_data/
-pocketbase
-pocketbase.exe
-pb_logs/
-
-
 node_modules
 build
 npm-debug.log
@@ -37,4 +31,7 @@ npm-debug.log
 .DS_Store
 dist/
 
-backend/fetchTiers/cache/
+bin/
+data/out/
+data/cache/*.txt
+pb/pb_data/
