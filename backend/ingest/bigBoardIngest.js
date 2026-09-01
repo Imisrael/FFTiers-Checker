@@ -69,6 +69,7 @@ async function main() {
             console.log(`\n--- Processing format: ${formatName} ---`);
             const scoringFormatId = scoringFormatsMap.get(formatName);
             let overallRanking = 1;
+            const posRanks = new Map();
 
             if (!scoringFormatId) {
                 console.warn(`Scoring format "${formatName}" not found in database. Skipping all its rankings.`);
@@ -95,13 +96,16 @@ async function main() {
                     // The position ID is retrieved from the expanded player record
                     // This assumes your 'players' collection has a 'position' relation field.
                     const positionId = playerRecord.position;
+                    const posRank = (posRanks.get(positionId) ?? 0) + 1;
+                    posRanks.set(positionId, posRank);
 
                     const dataToCreate = {
                         player: playerRecord.id,
                         format: scoringFormatId,
                         position: positionId,
                         tier: tierNumber,
-                        overallRanking: overallRanking
+                        overallRanking: overallRanking,
+                        positionRanking: posRank
                     };
 
                     try {
