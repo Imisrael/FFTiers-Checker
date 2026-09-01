@@ -16,7 +16,6 @@ COPY ./pb_migrations /pb/pb_migrations
 # uncomment to copy the local pb_hooks dir into the image
 # COPY ./pb_hooks /pb/pb_hooks
 
-COPY ./pb_data /pb/pb_data
 COPY ./pb_public /pb/pb_public
 
 EXPOSE 8091
