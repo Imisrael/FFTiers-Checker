@@ -78,8 +78,18 @@ export default function RankingTable({ type, onDataLoaded }) {
       columns.splice(2, 0, {
         field: 'expand.position.name',
         headerName: 'Position',
+        valueFormatter: p => p.data.positionRanking
+          ? `${p.value}${p.data.positionRanking}`
+          : p.value,
         maxWidth: 150,
         minWidth: 60,
+      });
+    } else {
+      columns.splice(2, 0, {
+        field: 'positionRanking',
+        headerName: 'Pos Rank',
+        maxWidth: 110,
+        minWidth: 70,
       });
     }
     return columns;
@@ -92,7 +102,7 @@ export default function RankingTable({ type, onDataLoaded }) {
       // const filter = `(week = '1' && year = '2026')`;
       const records = await pb.collection(type).getFullList({
         //  filter: filter,
-        expand: 'player,position,format, overallRanking',
+        expand: 'player,position,format, overallRanking, positionRanking',
       });
       setAllRankings(records);
       const numOfRecords = records.length;
