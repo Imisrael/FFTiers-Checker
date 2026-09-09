@@ -143,6 +143,7 @@ async function main() {
             for (const [formatName, tiers] of Object.entries(formats)) {
                 const formatID = await getOrCreate('scoring_formats', 'name', formatName, formatCache);
                 let positionRank = 1;
+                let failures = 0;
 
                 for (let i = 0; i < tiers.length; i++) {
                     const tier = i + 1;
@@ -152,27 +153,29 @@ async function main() {
                     console.log(`\nProcessing ${position} > ${formatName} > Tier ${tier} (${playerNames.length} players)...`);
 
                     const createPromises = playerNames.map(async (playerName) => {
+                        // Assign rank synchronously, in list order, BEFORE any await
+                        const rank = positionRank++;
                         const payload = {
                             player: await getOrCreatePlayer(playerName, positionID),
                             position: positionID,
                             format: formatID,
-                            tier: tier,
-                            week: week,
-                            year: year,
-                            positionRank: positionRank++,
+                            tier,
+                            week,
+                            year,
+                            positionRank: rank,
                         };
                         return pb.collection('weekly_rankings').create(payload);
                     });
 
                     const results = await Promise.allSettled(createPromises);
-
-                    results.forEach((result, index) => {
-                        if (result.status === 'rejected') {
-                            console.warn(`\t- Failed to process player "${playerNames[index]}":`, result.reason?.message || result.reason);
-                        }
+                    const failed = results.filter(r => r.status === 'rejected');
+                    failed.forEach((r, idx) => {
+                        console.error(`\t- FAILED ${position}/${formatName}/T${tier} "${playerNames[results.indexOf(r)]}":`,
+                            JSON.stringify(r.reason?.response?.data ?? r.reason?.message));
                     });
+                    if (failed.length) failures += failed.length;
 
-                    console.log(`\t...Tier ${tier} completed.`);
+                    console.log(`\t...Tier ${tier} completed (${failed.length} failed).`);
                 }
             }
         } catch (processError) {
