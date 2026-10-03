@@ -1,0 +1,187 @@
+{
+  "QB": {
+    "Standard": [
+      "Josh Allen, Lamar Jackson, Jalen Hurts",
+      "Brock Purdy, Patrick Mahomes II",
+      "Joe Burrow, Drake Maye, Dak Prescott, Trevor Lawrence, Jared Goff",
+      "Tyler Shough, Jordan Love, Justin Herbert",
+      "Bo Nix, Matthew Stafford",
+      "Malik Willis, Jaxson Dart, Kyler Murray",
+      "Bryce Young, Kirk Cousins, Jacoby Brissett, Geno Smith, Baker Mayfield",
+      "Drew Lock, C.J. Stroud, Aaron Rodgers"
+    ]
+  },
+  "RB": {
+    "Standard": [
+      "Jahmyr Gibbs, Kenneth Walker III, Christian McCaffrey, Derrick Henry, Bijan Robinson",
+      "Jonathan Taylor, James Cook III, Ashton Jeanty, Saquon Barkley",
+      "Javonte Williams, Breece Hall, Omarion Hampton, Chase Brown, Kyren Williams, David Montgomery",
+      "D'Andre Swift, Cam Skattebo, De'Von Achane, Bucky Irving",
+      "Chuba Hubbard, Jaylen Warren, Bhayshul Tuten, Jeremiyah Love",
+      "Aaron Jones Sr., Jadarian Price, Quinshon Judkins, Travis Etienne Jr.",
+      "Rhamondre Stevenson, TreVeyon Henderson, Jacory Croskey-Merritt, MarShawn Lloyd",
+      "J.K. Dobbins, Blake Corum, Kaelon Black, Kyle Monangai, Tony Pollard",
+      "Braelon Allen, Woody Marks, Kenny Gainwell, Emmett Johnson"
+    ],
+    "PPR": [
+      "Jahmyr Gibbs, Kenneth Walker III, Christian McCaffrey, Bijan Robinson",
+      "Derrick Henry, Ashton Jeanty, Jonathan Taylor",
+      "James Cook III, Breece Hall, Saquon Barkley, Chase Brown",
+      "Javonte Williams, Omarion Hampton, De'Von Achane",
+      "Cam Skattebo, Kyren Williams, David Montgomery, D'Andre Swift, Bucky Irving",
+      "Jaylen Warren, Chuba Hubbard, Aaron Jones Sr., Jeremiyah Love",
+      "Bhayshul Tuten, Travis Etienne Jr., Quinshon Judkins, Rhamondre Stevenson, Jadarian Price, TreVeyon Henderson",
+      "MarShawn Lloyd, Jacory Croskey-Merritt",
+      "Kyle Monangai, Kaelon Black, Tony Pollard, Kenny Gainwell, J.K. Dobbins, Blake Corum",
+      "Woody Marks, Braelon Allen, Emmett Johnson"
+    ],
+    "HalfPPR": [
+      "Jahmyr Gibbs, Kenneth Walker III, Christian McCaffrey, Bijan Robinson",
+      "Derrick Henry, Jonathan Taylor, Ashton Jeanty, James Cook III",
+      "Saquon Barkley, Javonte Williams, Chase Brown, Breece Hall, Omarion Hampton",
+      "Kyren Williams, De'Von Achane, D'Andre Swift, David Montgomery",
+      "Bucky Irving, Cam Skattebo, Chuba Hubbard, Jaylen Warren, Bhayshul Tuten, Jeremiyah Love, Aaron Jones Sr.",
+      "Travis Etienne Jr., Quinshon Judkins, TreVeyon Henderson, Rhamondre Stevenson",
+      "Jadarian Price, Jacory Croskey-Merritt, Blake Corum, Tony Pollard, Kaelon Black, Kyle Monangai, MarShawn Lloyd, J.K. Dobbins",
+      "Braelon Allen, Jonah Coleman, Woody Marks, Kenny Gainwell"
+    ]
+  },
+  "WR": {
+    "Standard": [
+      "Jaxon Smith-Njigba, Ja'Marr Chase, Justin Jefferson, Amon-Ra St. Brown",
+      "Chris Olave, CeeDee Lamb, Malik Nabers, Zay Flowers, George Pickens, Garrett Wilson",
+      "DeVonta Smith, Puka Nacua, Mike Evans, Christian Watson, Drake London, Davante Adams, Parker Washington",
+      "Rashee Rice, Tee Higgins, Ladd McConkey, Emeka Egbuka",
+      "Tetairoa McMillan, Jaylen Waddle, Jameson Williams, DK Metcalf",
+      "Deebo Samuel Sr., Matthew Golden, Jalen Coker, Terry McLaurin",
+      "Chris Godwin Jr., Romeo Doubs, Rome Odunze, Luther Burden III, Stefon Diggs, Rashod Bateman, Quentin Johnston",
+      "Courtland Sutton, Adonai Mitchell, Michael Wilson, Dontayvion Wicks, Jordan Addison, Marvin Harrison Jr.",
+      "Devaughn Vele, Josh Downs, Carnell Tate",
+      "Jakobi Meyers, Brian Thomas Jr., Kayshon Boutte, Denzel Boston",
+      "Tre Tucker, Khalil Shakir, KC Concepcion Jr., Xavier Worthy, Caleb Douglas",
+      "Wan'Dale Robinson, Rashid Shaheed, Kalif Raymond, Jalen Nailor, Malik Washington, Tre' Harris"
+    ],
+    "PPR": [
+      "Jaxon Smith-Njigba, Ja'Marr Chase, Justin Jefferson, Amon-Ra St. Brown, Chris Olave",
+      "Garrett Wilson, CeeDee Lamb, Malik Nabers, DeVonta Smith, Zay Flowers, George Pickens",
+      "Puka Nacua, Drake London, Mike Evans, Parker Washington, Rashee Rice",
+      "Christian Watson, Ladd McConkey, Davante Adams, Jaylen Waddle",
+      "Tetairoa McMillan, Tee Higgins, Emeka Egbuka, Jalen Coker",
+      "DK Metcalf, Matthew Golden, Deebo Samuel Sr., Jameson Williams, Chris Godwin Jr., Stefon Diggs, Terry McLaurin",
+      "Romeo Doubs, Luther Burden III, Michael Wilson",
+      "Rome Odunze, Josh Downs, Dontayvion Wicks, Adonai Mitchell, Rashod Bateman, Quentin Johnston",
+      "Courtland Sutton, Devaughn Vele, Jakobi Meyers, Marvin Harrison Jr., Carnell Tate, Jordan Addison, Denzel Boston",
+      "Khalil Shakir, Kayshon Boutte, KC Concepcion Jr., Wan'Dale Robinson, Brian Thomas Jr., Caleb Douglas, Tre Tucker, Xavier Worthy",
+      "Malik Washington, Kalif Raymond, Tre' Harris, Keenan Allen, Pat Bryant"
+    ],
+    "HalfPPR": [
+      "Jaxon Smith-Njigba, Ja'Marr Chase, Amon-Ra St. Brown, Justin Jefferson, Chris Olave",
+      "CeeDee Lamb, Malik Nabers, Zay Flowers, Garrett Wilson, DeVonta Smith, Puka Nacua, George Pickens",
+      "Parker Washington, Drake London, Christian Watson, Mike Evans",
+      "Davante Adams, Jaylen Waddle, Ladd McConkey, Rashee Rice, Tee Higgins, Tetairoa McMillan",
+      "Emeka Egbuka, Jalen Coker, Matthew Golden, DK Metcalf, Jameson Williams, Deebo Samuel Sr.",
+      "Stefon Diggs, Terry McLaurin, Romeo Doubs, Luther Burden III, Chris Godwin Jr.",
+      "Rome Odunze, Josh Downs, Adonai Mitchell, Dontayvion Wicks, Michael Wilson, Rashod Bateman",
+      "Quentin Johnston, Devaughn Vele, Courtland Sutton, Jordan Addison, Denzel Boston, Carnell Tate, Jakobi Meyers, Marvin Harrison Jr.",
+      "Tre Tucker, Brian Thomas Jr., Khalil Shakir, Kayshon Boutte, KC Concepcion Jr., Xavier Worthy, Wan'Dale Robinson",
+      "Kalif Raymond, Malik Washington, Caleb Douglas, Rashid Shaheed, Tre' Harris, Jalen Nailor"
+    ]
+  },
+  "TE": {
+    "Standard": [
+      "Dalton Kincaid, Trey McBride, Tucker Kraft",
+      "Sam LaPorta, Isaiah Likely, Tyler Warren, George Kittle",
+      "Travis Kelce, Colston Loveland",
+      "Juwan Johnson, Dalton Schultz",
+      "Hunter Henry, Pat Freiermuth, Brock Bowers",
+      "Harold Fannin Jr., Jake Ferguson, Mark Andrews",
+      "Kyle Pitts Sr., AJ Barner, Michael Mayer, Oronde Gadsden II",
+      "Mike Gesicki, Terrance Ferguson, Brenton Strange"
+    ],
+    "PPR": [
+      "Trey McBride, Dalton Kincaid, Tucker Kraft",
+      "Sam LaPorta, Isaiah Likely, Tyler Warren, Travis Kelce, Dalton Schultz",
+      "Juwan Johnson, George Kittle",
+      "Colston Loveland",
+      "Jake Ferguson, Pat Freiermuth, Harold Fannin Jr., Hunter Henry, Brock Bowers",
+      "Kyle Pitts Sr., Michael Mayer, Mark Andrews",
+      "AJ Barner, Oronde Gadsden II",
+      "Evan Engram, Mike Gesicki, T.J. Hockenson, Brenton Strange"
+    ],
+    "HalfPPR": [
+      "Trey McBride, Dalton Kincaid, Sam LaPorta, Tucker Kraft",
+      "Isaiah Likely, Tyler Warren, Travis Kelce, George Kittle, Brock Bowers",
+      "Dalton Schultz, Juwan Johnson, Colston Loveland",
+      "Jake Ferguson, Harold Fannin Jr.",
+      "Mark Andrews, Hunter Henry, Kyle Pitts Sr., Pat Freiermuth, Oronde Gadsden II",
+      "AJ Barner, Michael Mayer",
+      "Mike Gesicki, Brenton Strange, Terrance Ferguson, T.J. Hockenson"
+    ]
+  },
+  "Flex": {
+    "Standard": [
+      "Chris Olave, CeeDee Lamb, D'Andre Swift, Malik Nabers, Cam Skattebo, De'Von Achane, Bucky Irving",
+      "George Pickens, Chuba Hubbard, Zay Flowers, Jaylen Warren, Garrett Wilson, Bhayshul Tuten",
+      "Jeremiyah Love, Puka Nacua, DeVonta Smith",
+      "Aaron Jones Sr., Mike Evans, Christian Watson, Jadarian Price, Drake London",
+      "Davante Adams, Quinshon Judkins, Parker Washington, Travis Etienne Jr.",
+      "Tee Higgins, Rashee Rice, Rhamondre Stevenson, Ladd McConkey, Dalton Kincaid",
+      "TreVeyon Henderson, Emeka Egbuka, Tucker Kraft, Tetairoa McMillan, Trey McBride, Jacory Croskey-Merritt, Jaylen Waddle",
+      "MarShawn Lloyd, Jameson Williams, J.K. Dobbins, DK Metcalf, Blake Corum",
+      "Sam LaPorta, Deebo Samuel Sr., Isaiah Likely, Kaelon Black, Matthew Golden",
+      "Jalen Coker, Tyler Warren, Kyle Monangai, Terry McLaurin, George Kittle",
+      "Tony Pollard, Romeo Doubs, Chris Godwin Jr., Rome Odunze, Luther Burden III",
+      "Rashod Bateman, Stefon Diggs, Travis Kelce, Colston Loveland, Quentin Johnston",
+      "Courtland Sutton, Juwan Johnson, Adonai Mitchell, Michael Wilson, Braelon Allen, Dontayvion Wicks, Jordan Addison, Dalton Schultz, Marvin Harrison Jr.",
+      "Devaughn Vele, Carnell Tate, Josh Downs, Jakobi Meyers, Brian Thomas Jr."
+    ],
+    "PPR": [
+      "Chase Brown, George Pickens, Zay Flowers, Trey McBride, Omarion Hampton, Javonte Williams, Drake London, Puka Nacua",
+      "Mike Evans, De'Von Achane, Parker Washington, Rashee Rice",
+      "Cam Skattebo, Ladd McConkey, Christian Watson, Kyren Williams, David Montgomery, D'Andre Swift, Dalton Kincaid",
+      "Davante Adams, Bucky Irving, Jaylen Waddle, Tucker Kraft, Tetairoa McMillan, Jaylen Warren",
+      "Chuba Hubbard, Aaron Jones Sr., Jeremiyah Love, Tee Higgins, Emeka Egbuka",
+      "Sam LaPorta, Jalen Coker, Bhayshul Tuten, DK Metcalf, Isaiah Likely",
+      "Tyler Warren, Matthew Golden, Deebo Samuel Sr., Travis Etienne Jr., Travis Kelce, Dalton Schultz, Jameson Williams",
+      "Chris Godwin Jr., Rhamondre Stevenson, Stefon Diggs, Terry McLaurin, Quinshon Judkins",
+      "Juwan Johnson, Romeo Doubs, Jadarian Price, George Kittle, Luther Burden III, Michael Wilson, TreVeyon Henderson",
+      "Rome Odunze, Colston Loveland, Josh Downs, Dontayvion Wicks",
+      "Adonai Mitchell, Rashod Bateman, Quentin Johnston, Courtland Sutton, Devaughn Vele, Jakobi Meyers",
+      "Marvin Harrison Jr., Carnell Tate, Pat Freiermuth, Jake Ferguson, Jordan Addison, Denzel Boston, MarShawn Lloyd, Khalil Shakir, Harold Fannin Jr.",
+      "Hunter Henry, Kayshon Boutte, Jacory Croskey-Merritt"
+    ],
+    "HalfPPR": [
+      "Malik Nabers, Garrett Wilson, Omarion Hampton, Puka Nacua, DeVonta Smith, George Pickens, Kyren Williams",
+      "De'Von Achane, Parker Washington, Drake London, D'Andre Swift, David Montgomery",
+      "Trey McBride, Chuba Hubbard, Bucky Irving, Mike Evans, Christian Watson, Jaylen Warren, Cam Skattebo",
+      "Davante Adams, Bhayshul Tuten, Jaylen Waddle, Jeremiyah Love, Ladd McConkey, Aaron Jones Sr., Rashee Rice",
+      "Dalton Kincaid, Tee Higgins, Tetairoa McMillan, Travis Etienne Jr.",
+      "Emeka Egbuka, Tucker Kraft, Sam LaPorta",
+      "Jalen Coker, Quinshon Judkins, Rhamondre Stevenson, TreVeyon Henderson, Matthew Golden, DK Metcalf",
+      "Jameson Williams, Deebo Samuel Sr., Isaiah Likely, Tyler Warren, Stefon Diggs, Brock Bowers",
+      "George Kittle, Travis Kelce, Terry McLaurin, Romeo Doubs, Chris Godwin Jr., Luther Burden III",
+      "Rome Odunze, Josh Downs, Adonai Mitchell, Dalton Schultz, Dontayvion Wicks, Michael Wilson, Jadarian Price, Rashod Bateman, Juwan Johnson",
+      "Colston Loveland, Jacory Croskey-Merritt, Quentin Johnston, Blake Corum",
+      "Tony Pollard, Kyle Monangai, Kaelon Black, Courtland Sutton, MarShawn Lloyd, Devaughn Vele, Jordan Addison",
+      "Denzel Boston, Jakobi Meyers, Carnell Tate, J.K. Dobbins, Marvin Harrison Jr."
+    ]
+  },
+  "DST": {
+    "Standard": [
+      "Seattle Seahawks, Houston Texans, Kansas City Chiefs",
+      "Philadelphia Eagles, Los Angeles Rams, Green Bay Packers, San Francisco 49ers, Minnesota Vikings",
+      "Carolina Panthers",
+      "New England Patriots, Tampa Bay Buccaneers, Denver Broncos, Detroit Lions, Buffalo Bills",
+      "Baltimore Ravens, New Orleans Saints, Jacksonville Jaguars",
+      "Pittsburgh Steelers, Cincinnati Bengals, Cleveland Browns"
+    ]
+  },
+  "K": {
+    "Standard": [
+      "Brandon Aubrey, Eddy Pineiro, Ka'imi Fairbairn, Jason Myers",
+      "Tyler Loop, Evan McPherson, Harrison Butker, Cam Little, Chris Boswell, Cameron Dicker",
+      "Trey Smack, Tyler Bass, Jake Bates, Jason Sanders, Harrison Mevis, Jake Elliott",
+      "Will Reichard, Andy Borregales, Ryan Fitzgerald, Chase McLaughlin"
+    ]
+  }
+}
