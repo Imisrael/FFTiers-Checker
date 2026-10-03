@@ -1,5 +1,5 @@
 /* eslint-disable react/react-in-jsx-scope */
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import "../styles/app.css"
 import { TIER_COLORS } from "../utils/constants.js"
@@ -67,7 +67,7 @@ function TierChip({ value }) {
 const DEFAULT_POSITION = 'RB';
 const DEFAULT_FORMAT = 'Standard';
 
-const selectClass = "w-full rounded-md border-slate-600 bg-slate-700 px-3 py-1.5 pr-8 text-sm font-medium text-white shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 md:w-auto appearance-none bg-no-repeat bg-right-1.5 bg-[length:1.2em_1.2em] bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24%24%22 fill=%22%239ca3af%22><path d=%22M11.9997 13.1714L16.9495 8.22168L18.3637 9.63589L11.9997 15.9999L5.63574 9.63589L7.04996 8.22168L11.9997 13.1714Z%22></path></svg>')]";
+const selectClass = "w-full min-w-0 rounded-md border-slate-600 bg-slate-700 px-2 py-1.5 pr-7 text-sm font-medium text-white shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 md:w-auto appearance-none bg-no-repeat bg-right-1.5 bg-[length:1.2em_1.2em] bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24%24%22 fill=%22%239ca3af%22><path d=%22M11.9997 13.1714L16.9495 8.22168L18.3637 9.63589L11.9997 15.9999L5.63574 9.63589L7.04996 8.22168L11.9997 13.1714Z%22></path></svg>')]";
 
 const posOrder = (name) => {
   const i = POSITION_ORDER.indexOf(name);
@@ -159,10 +159,26 @@ const pickValid = (wanted, list, fallback) => {
  * onFiltersChange(patch): called when the user changes a dropdown
  * onCompare({ week, format, position }): asks the parent to open another table with these filters
  */
+// True on phone-width screens; used to drop non-essential columns
+function useIsNarrow(breakpoint = 640) {
+  const [narrow, setNarrow] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth < breakpoint
+  );
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
+    const onChange = (e) => setNarrow(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, [breakpoint]);
+  return narrow;
+}
+
 export default function RankingTable({ filters = {}, onFiltersChange, onDataLoaded, onCompare }) {
+  const isNarrow = useIsNarrow();
 
   const [search, setSearch] = useState('');
   const [mineOnlyState, setMineOnly] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
   const teams = useTeams();
   const team = teams.find((t) => t.id === filters.team) ?? teams[0] ?? null;
   const teamId = team?.id ?? null;
@@ -326,9 +342,15 @@ export default function RankingTable({ filters = {}, onFiltersChange, onDataLoad
     if (isFlex || isAll) {
       cols.push({ field: 'expand.position.name', headerName: 'Pos', maxWidth: 100, minWidth: 70 });
     }
-    cols.push({ field: 'positionRank', headerName: 'Pos Rank', maxWidth: 120, minWidth: 90 });
+    cols.push({
+      field: 'positionRank',
+      headerName: 'Pos Rank',
+      maxWidth: 120,
+      minWidth: 80,
+      hide: isNarrow, // not worth the width on a phone
+    });
     return cols;
-  }, [isFlex, isAll, hasPrevWeek, week]);
+  }, [isFlex, isAll, hasPrevWeek, week, isNarrow]);
 
   const getRowId = useCallback((params) => params.data.id, []);
 
@@ -346,6 +368,19 @@ export default function RankingTable({ filters = {}, onFiltersChange, onDataLoad
       fontWeight: params.data.onTeam ? 600 : undefined,
     };
   }, [tierStarts, isAll]);
+
+  // Stop the page behind a fullscreen table from scrolling
+  useEffect(() => {
+    if (!fullscreen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e) => e.key === 'Escape' && setFullscreen(false);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [fullscreen]);
 
   const autoSizeStrategy = useMemo(() => ({
     type: "fitGridWidth",
@@ -377,92 +412,97 @@ export default function RankingTable({ filters = {}, onFiltersChange, onDataLoad
     );
   }
 
+  const wrapClass = fullscreen
+    ? 'fixed inset-0 z-50 flex flex-col bg-gray-900 p-3'
+    : 'flex flex-col h-full min-w-0';
+
   return (
-    <div className="flex flex-col h-full min-w-0">
-      <div className="flex flex-col items-stretch space-y-4 md:flex-row md:items-center md:space-y-0 md:space-x-4 mb-4 mt-4 flex-wrap shrink-0">
-        <div className="flex items-center space-x-2">
-          <label htmlFor="week-select" className="text-sm font-medium text-gray-300">Week</label>
-          <select
-            id="week-select"
-            value={week ?? ''}
-            onChange={(e) => onFiltersChange?.({ week: Number(e.target.value) })}
-            className={selectClass}
-          >
-            {availableWeeks.map((w) => (
-              <option key={w} value={w}>Week {w}</option>
-            ))}
-          </select>
-        </div>
+    <div className={wrapClass}>
+      {/* Row 1: what am I looking at */}
+      <div className="flex flex-wrap items-center gap-2 shrink-0">
+        <select
+          aria-label="Week"
+          value={week ?? ''}
+          onChange={(e) => onFiltersChange?.({ week: Number(e.target.value) })}
+          className={selectClass}
+        >
+          {availableWeeks.map((w) => (
+            <option key={w} value={w}>Week {w}</option>
+          ))}
+        </select>
 
-        <div className="flex items-center space-x-2">
-          <label htmlFor="format-select" className="text-sm font-medium text-gray-300">Format</label>
-          <select
-            id="format-select"
-            value={format ?? ''}
-            onChange={(e) => onFiltersChange?.({ format: e.target.value })}
-            disabled={!formatMatters}
-            title={formatMatters ? undefined : `${position} tiers are the same for every format`}
-            className={`${selectClass} disabled:opacity-50 disabled:cursor-not-allowed`}
-          >
-            {availableFormats.map((f) => (
-              <option key={f} value={f}>{f}</option>
-            ))}
-          </select>
-        </div>
+        <select
+          aria-label="Scoring format"
+          value={format ?? ''}
+          onChange={(e) => onFiltersChange?.({ format: e.target.value })}
+          disabled={!formatMatters}
+          title={formatMatters ? undefined : `${position} tiers are the same for every format`}
+          className={`${selectClass} disabled:opacity-50 disabled:cursor-not-allowed`}
+        >
+          {availableFormats.map((f) => (
+            <option key={f} value={f}>{f}</option>
+          ))}
+        </select>
 
-        <div className="flex items-center space-x-2">
-          <label htmlFor="position-select" className="text-sm font-medium text-gray-300">Position</label>
-          <select
-            id="position-select"
-            value={position ?? ''}
-            onChange={(e) => onFiltersChange?.({ position: e.target.value })}
-            className={selectClass}
-          >
-            {availablePositions.map((p) => (
-              <option key={p} value={p}>{p}</option>
-            ))}
-          </select>
-        </div>
+        <select
+          aria-label="Position"
+          value={position ?? ''}
+          onChange={(e) => onFiltersChange?.({ position: e.target.value })}
+          className={selectClass}
+        >
+          {availablePositions.map((p) => (
+            <option key={p} value={p}>{p}</option>
+          ))}
+        </select>
 
         <input
           type="search"
           placeholder="Search player"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="rounded-md border-slate-600 bg-slate-700 px-3 py-1.5 text-sm text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 md:w-44"
+          className="min-w-0 flex-1 rounded-md border border-slate-600 bg-slate-700 px-2 py-1.5 text-sm text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 md:max-w-44"
         />
 
-        <div className="flex items-center space-x-2">
-          <label htmlFor="team-select" className="text-sm font-medium text-gray-300">Team</label>
-          <select
-            id="team-select"
-            value={teamId ?? ''}
-            onChange={(e) => {
-              if (e.target.value === '__new') {
-                const name = prompt('Team name?');
-                if (name !== null) onFiltersChange?.({ team: addTeam(name) });
-                return;
-              }
-              onFiltersChange?.({ team: e.target.value });
-            }}
-            className={selectClass}
-          >
-            {teams.length === 0 && <option value="">No teams</option>}
-            {teams.map((t) => (
-              <option key={t.id} value={t.id}>{t.name}</option>
-            ))}
-            <option value="__new">+ New team</option>
-          </select>
-        </div>
+        <button
+          onClick={() => setFullscreen((v) => !v)}
+          title={fullscreen ? 'Exit fullscreen' : 'Fullscreen table'}
+          aria-label={fullscreen ? 'Exit fullscreen' : 'Fullscreen table'}
+          className="shrink-0 rounded-md bg-slate-700 hover:bg-slate-600 px-2.5 py-1.5 text-sm text-white"
+        >
+          {fullscreen ? '\u2715' : '\u26F6'}
+        </button>
+      </div>
+
+      {/* Row 2: team controls */}
+      <div className="mt-2 mb-3 flex flex-wrap items-center gap-2 border-t border-slate-700/70 pt-2 shrink-0">
+        <select
+          aria-label="Team"
+          value={teamId ?? ''}
+          onChange={(e) => {
+            if (e.target.value === '__new') {
+              const name = prompt('Team name?');
+              if (name !== null) onFiltersChange?.({ team: addTeam(name) });
+              return;
+            }
+            onFiltersChange?.({ team: e.target.value });
+          }}
+          className={selectClass}
+        >
+          {teams.length === 0 && <option value="">No teams</option>}
+          {teams.map((t) => (
+            <option key={t.id} value={t.id}>{t.name}</option>
+          ))}
+          <option value="__new">+ New team</option>
+        </select>
 
         <button
           onClick={() => setMineOnly((v) => !v)}
           disabled={!team || isAll}
           title={isAll ? 'Team view always shows only your roster' : mineOnly ? 'Show everyone' : team ? `Show only ${team.name}` : 'Pick a team first'}
-          className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-40 ${mineOnly ? 'bg-amber-500 text-slate-900 hover:bg-amber-400' : 'bg-slate-700 text-white hover:bg-slate-600'
+          className={`min-w-0 truncate rounded-md px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-40 ${mineOnly ? 'bg-amber-500 text-slate-900 hover:bg-amber-400' : 'bg-slate-700 text-white hover:bg-slate-600'
             }`}
         >
-          ★ {team ? team.name : 'Mine'}{rosterSet.size ? ` (${rosterSet.size})` : ''}
+          {'\u2605'} {mineOnly ? 'Roster' : 'All players'}
         </button>
 
         {onCompare && (
@@ -470,9 +510,9 @@ export default function RankingTable({ filters = {}, onFiltersChange, onDataLoad
             onClick={() => onCompare({ week: week - 1, format, position, team: teamId ?? undefined })}
             disabled={!hasPrevWeek}
             title={hasPrevWeek ? `Open week ${week - 1} next to this one` : 'No previous week for this position'}
-            className="rounded-md bg-slate-700 hover:bg-slate-600 disabled:opacity-40 disabled:hover:bg-slate-700 px-3 py-1.5 text-sm font-medium text-white transition-colors"
+            className="ml-auto shrink-0 rounded-md bg-slate-700 hover:bg-slate-600 disabled:opacity-40 disabled:hover:bg-slate-700 px-3 py-1.5 text-sm font-medium text-white transition-colors"
           >
-            Compare wk {week - 1}
+            vs wk {week - 1}
           </button>
         )}
       </div>
@@ -480,6 +520,7 @@ export default function RankingTable({ filters = {}, onFiltersChange, onDataLoad
       {isAll && !team && (
         <p className="text-sm text-amber-400 mb-2">Pick or create a team to see it here.</p>
       )}
+
       <div className="flex-1 min-h-0">
         <AgGridReact
           rowData={rows}
@@ -490,6 +531,9 @@ export default function RankingTable({ filters = {}, onFiltersChange, onDataLoad
           autoSizeStrategy={autoSizeStrategy}
           quickFilterText={search}
           context={{ teamId, onNeedTeam }}
+          rowHeight={isNarrow ? 34 : 42}
+          headerHeight={isNarrow ? 34 : 42}
+          suppressCellFocus
         />
       </div>
     </div>

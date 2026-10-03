@@ -6,6 +6,7 @@ import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persi
 
 import RankingTable from './components/RankingTable';
 import TeamManager from './components/TeamManager';
+import { consumeImportFromUrl } from './utils/teams';
 
 // Create these once, not on every render, or every state change spins up a new client
 const queryClient = new QueryClient();
@@ -49,8 +50,12 @@ function loadInitialTables(): Table[] {
   return [{ id: crypto.randomUUID() }];
 }
 
+// Pull any shared teams out of the URL before the first render
+const importedCount = consumeImportFromUrl();
+
 export default function App() {
   const [lastUpdated, setLastUpdated] = React.useState("");
+  const [imported] = React.useState(importedCount);
   const [tables, setTables] = React.useState<Table[]>(loadInitialTables);
 
   // Keep URL + localStorage in sync with the current tables
@@ -81,13 +86,18 @@ export default function App() {
 
   return (
     <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
-      <div className="bg-gray-900 text-white min-h-screen p-4 sm:p-8 font-sans">
-        <div className="mx-5">
-          <h2 className="text-2xl font-bold text-blue-400 mb-2">Weekly Tier Rankings</h2>
-          {lastUpdated && <p>Last Updated: {lastUpdated}</p>}
+      <div className="bg-gray-900 text-white min-h-screen p-3 sm:p-8 font-sans">
+        <div className="mx-0 sm:mx-5">
+          <h2 className="text-xl sm:text-2xl font-bold text-blue-400 mb-1">Weekly Tier Rankings</h2>
+          {lastUpdated && <p className="text-xs sm:text-sm text-gray-400">Last Updated: {lastUpdated}</p>}
+          {imported > 0 && (
+            <p className="text-sm text-amber-400 mt-1">
+              Imported {imported} team{imported === 1 ? '' : 's'} from that link.
+            </p>
+          )}
           <TeamManager />
           <button
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            className="bg-blue-500 hover:bg-blue-700 text-white font-semibold text-sm py-1.5 px-3 rounded"
             onClick={addTable}
           >
             Add another table
@@ -98,7 +108,7 @@ export default function App() {
             style={{
               maxWidth: tables.length === 1 ? '900px' : '100%',
               gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, 560px), 1fr))`,
-              gridAutoRows: 'minmax(0, calc(100vh - 220px))',
+              gridAutoRows: 'minmax(420px, calc(100dvh - 260px))',
             }}
           >
             {tables.map((t) => (
