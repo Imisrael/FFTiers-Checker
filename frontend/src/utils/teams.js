@@ -1,4 +1,5 @@
-// Named fantasy teams, each a list of PocketBase player ids. Persisted to localStorage.
+// Named fantasy teams, each a list of player names (the Convex rows have no
+// stable player id; names are the key). Persisted to localStorage.
 // Any component can subscribe via useTeams(); all open tables stay in sync.
 import { useSyncExternalStore } from 'react';
 
@@ -53,8 +54,8 @@ export function togglePlayer(teamId, playerId) {
 }
 
 // --- Sharing ------------------------------------------------------------
-// Teams are packed into the URL hash as base64url(JSON). Ids are 15 chars, so a
-// couple of full rosters is a few hundred characters, well inside URL limits.
+// Teams are packed into the URL hash as base64url(JSON). A couple of full
+// rosters is under a kilobyte, well inside URL limits.
 
 const b64urlEncode = (str) =>
   btoa(unescape(encodeURIComponent(str))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');

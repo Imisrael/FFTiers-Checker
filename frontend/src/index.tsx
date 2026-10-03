@@ -1,18 +1,14 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client'
-import { QueryClient } from '@tanstack/react-query';
-import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
-import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister'
+import { ConvexProvider, ConvexReactClient } from 'convex/react';
 
 import RankingTable from './components/RankingTable';
 import TeamManager from './components/TeamManager';
 import { consumeImportFromUrl } from './utils/teams';
 
-// Create these once, not on every render, or every state change spins up a new client
-const queryClient = new QueryClient();
-const persister = createAsyncStoragePersister({
-  storage: window.localStorage,
-});
+// Create once, not on every render. VITE_CONVEX_URL comes from .env.local
+// (written by `npx convex dev`) or the build env.
+const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
 
 type TableFilters = { week?: number; format?: string; position?: string; team?: string };
 type Table = TableFilters & { id: string };
@@ -85,7 +81,7 @@ export default function App() {
     });
 
   return (
-    <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
+    <ConvexProvider client={convex}>
       <div className="bg-gray-900 text-white min-h-screen p-3 sm:p-8 font-sans">
         <div className="mx-0 sm:mx-5">
           <h2 className="text-xl sm:text-2xl font-bold text-blue-400 mb-1">Weekly Tier Rankings</h2>
@@ -133,7 +129,7 @@ export default function App() {
           </div>
         </div>
       </div>
-    </PersistQueryClientProvider>
+    </ConvexProvider>
   );
 }
 

@@ -4,8 +4,9 @@ import { AgGridReact } from 'ag-grid-react';
 import "../styles/app.css"
 import { TIER_COLORS } from "../utils/constants.js"
 import { useTeams, togglePlayer, addTeam } from "../utils/teams.js"
-import { useQuery } from '@tanstack/react-query';
-import PocketBase from 'pocketbase';
+import { useQuery } from 'convex/react';
+import { api } from '../../convex/_generated/api';
+import { seasonYear } from '../../convex/lib/tiers';
 
 import {
   ModuleRegistry,
@@ -15,7 +16,9 @@ import {
   NumberFilterModule,
   QuickFilterModule,
   ClientSideRowModelModule,
-  RowStyleModule
+  RowStyleModule,
+  CellStyleModule,
+  TooltipModule,
 } from 'ag-grid-community';
 
 ModuleRegistry.registerModules([
@@ -25,12 +28,12 @@ ModuleRegistry.registerModules([
   NumberFilterModule,
   QuickFilterModule,
   ClientSideRowModelModule,
-  RowStyleModule
+  RowStyleModule,
+  CellStyleModule,
+  TooltipModule,
 ]);
 
-const pb = new PocketBase('https://fftiers.israelimru.com');
-const COLLECTION = 'weekly_rankings';
-const CURRENT_YEAR = new Date().getFullYear();
+const CURRENT_YEAR = seasonYear(new Date());
 // Order positions appear in the dropdown. Anything not listed goes at the end.
 const POSITION_ORDER = ['QB', 'RB', 'WR', 'TE', 'Flex', 'K', 'DST'];
 const FLEX = 'Flex';
@@ -195,48 +198,41 @@ export default function RankingTable({ filters = {}, onFiltersChange, onDataLoad
 
   const defaultColDef = useMemo(() => ({ filter: true }), []);
 
-  const { data: allRankings = [], isLoading, isError, error } = useQuery({
-    queryKey: [COLLECTION, CURRENT_YEAR],
-    queryFn: async () => {
-      const records = await pb.collection(COLLECTION).getFullList({
-        filter: `year = ${CURRENT_YEAR}`,
-        expand: 'player,position,format',
-      });
-      const latestUpdated = records.reduce(
-        (max, r) => (r.updated > max ? r.updated : max),
-        ''
-      );
-      onDataLoaded?.(latestUpdated);
-      return records;
-    },
-  });
+  // One doc per week with data: drives the dropdowns and "Last Updated"
+  const weeksMeta = useQuery(api.rankings.weeks, { year: CURRENT_YEAR });
+  const isLoading = weeksMeta === undefined;
+
+  useEffect(() => {
+    if (!weeksMeta?.length) return;
+    const latest = Math.max(...weeksMeta.map((w) => w.updatedAt));
+    onDataLoaded?.(new Date(latest).toISOString());
+  }, [weeksMeta, onDataLoaded]);
+
+  // Which formats each position has, unioned across the season
+  const formatsByPosition = useMemo(() => {
+    const m = new Map();
+    for (const w of weeksMeta ?? []) {
+      for (const [p, fs] of Object.entries(w.positionFormats)) {
+        if (!m.has(p)) m.set(p, new Set());
+        fs.forEach((f) => m.get(p).add(f));
+      }
+    }
+    return m;
+  }, [weeksMeta]);
 
   const availableFormats = useMemo(
-    () => [...new Set(allRankings.map((r) => r.expand?.format?.name).filter(Boolean))],
-    [allRankings]
+    () => [...new Set([...formatsByPosition.values()].flatMap((s) => [...s]))],
+    [formatsByPosition]
   );
   const availablePositions = useMemo(
-    () => [ALL, ...[...new Set(allRankings.map((r) => r.expand?.position?.name).filter(Boolean))]
-      .sort((a, b) => posOrder(a) - posOrder(b))],
-    [allRankings]
+    () => [ALL, ...[...formatsByPosition.keys()].sort((a, b) => posOrder(a) - posOrder(b))],
+    [formatsByPosition]
   );
 
   const format = pickValid(filters.format, availableFormats, DEFAULT_FORMAT);
   const position = pickValid(filters.position, availablePositions, DEFAULT_POSITION);
   const isFlex = position === FLEX;
   const isAll = position === ALL;
-
-  // Which formats each position actually has data for
-  const formatsByPosition = useMemo(() => {
-    const m = new Map();
-    for (const r of allRankings) {
-      const p = r.expand?.position?.name, f = r.expand?.format?.name;
-      if (!p || !f) continue;
-      if (!m.has(p)) m.set(p, new Set());
-      m.get(p).add(f);
-    }
-    return m;
-  }, [allRankings]);
 
   // QB / K / DST only exist under Standard. If the chosen format has nothing for a
   // position, fall back to whatever format it does have instead of showing an empty grid.
@@ -247,40 +243,54 @@ export default function RankingTable({ filters = {}, onFiltersChange, onDataLoad
   const formatMatters = isAll || (formatsByPosition.get(position)?.size ?? 0) > 1;
   const mineOnly = isAll || mineOnlyState;
 
-  // Rows for this view (any week): one position, or every non-Flex position in team view
-  const comboRecords = useMemo(
-    () => allRankings.filter((r) => {
-      const p = r.expand?.position?.name;
-      if (!p) return false;
-      if (isAll ? p === FLEX : p !== position) return false;
-      return r.expand?.format?.name === effectiveFormatFor(p);
-    }),
-    [allRankings, position, isAll, effectiveFormatFor]
+  // Rows this view cares about: one position, or every non-Flex position in team view
+  const inCombo = useCallback(
+    (r) => {
+      if (isAll ? r.position === FLEX : r.position !== position) return false;
+      return r.format === effectiveFormatFor(r.position);
+    },
+    [position, isAll, effectiveFormatFor]
   );
 
-  // Weeks that actually have data for this combo (so a broken position shows what it really has)
+  // Weeks that actually have data for this position
   const availableWeeks = useMemo(
-    () => [...new Set(comboRecords.map((r) => r.week))].sort((a, b) => a - b),
-    [comboRecords]
+    () => (weeksMeta ?? [])
+      .filter((w) => isAll || w.positionFormats[position])
+      .map((w) => w.week)
+      .sort((a, b) => a - b),
+    [weeksMeta, position, isAll]
   );
   const week = availableWeeks.includes(filters.week)
     ? filters.week
     : availableWeeks[availableWeeks.length - 1];
   const hasPrevWeek = availableWeeks.includes(week - 1);
 
+  // Two small subscriptions: this week and (for the Δ column) the one before
+  const thisWeekRows = useQuery(
+    api.rankings.byWeek,
+    week === undefined ? 'skip' : { year: CURRENT_YEAR, week }
+  );
+  const prevWeekRows = useQuery(
+    api.rankings.byWeek,
+    hasPrevWeek ? { year: CURRENT_YEAR, week: week - 1 } : 'skip'
+  );
+  const comboRecords = useMemo(
+    () => (thisWeekRows ?? []).filter(inCombo),
+    [thisWeekRows, inCombo]
+  );
+  const prevComboRecords = useMemo(
+    () => (prevWeekRows ?? []).filter(inCombo),
+    [prevWeekRows, inCombo]
+  );
+
   const { rows, tierStarts } = useMemo(() => {
     // Previous week's tier per player, for the movement column
     const prevTier = new Map();
-    if (hasPrevWeek) {
-      for (const r of comboRecords) {
-        if (r.week === week - 1) prevTier.set(r.player, r.tier);
-      }
-    }
+    for (const r of prevComboRecords) prevTier.set(r.player, r.tier);
 
     const filtered = comboRecords
-      .filter((r) => r.week === week)
       .sort((a, b) =>
-        (posOrder(a.expand.position.name) - posOrder(b.expand.position.name)) ||
+        (posOrder(a.position) - posOrder(b.position)) ||
         (a.tier - b.tier) ||
         (a.positionRank - b.positionRank)
       )
@@ -296,14 +306,14 @@ export default function RankingTable({ filters = {}, onFiltersChange, onDataLoad
     const starts = new Set();
     let lastKey = null;
     for (const r of filtered) {
-      const key = isAll ? r.expand.position.name : `${r.expand.position.name}:${r.tier}`;
+      const key = isAll ? r.position : `${r.position}:${r.tier}`;
       if (key !== lastKey) {
-        starts.add(r.id);
+        starts.add(r._id);
         lastKey = key;
       }
     }
     return { rows: filtered, tierStarts: starts };
-  }, [comboRecords, week, hasPrevWeek, rosterSet, teams, teamId, mineOnly, isAll]);
+  }, [comboRecords, prevComboRecords, hasPrevWeek, rosterSet, teams, teamId, mineOnly, isAll]);
 
   const colDefs = useMemo(() => {
     const cols = [
@@ -338,9 +348,9 @@ export default function RankingTable({ filters = {}, onFiltersChange, onDataLoad
         cellStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 },
       });
     }
-    cols.push({ field: 'expand.player.name', headerName: 'Name', flex: 1, minWidth: 150 });
+    cols.push({ field: 'player', headerName: 'Name', flex: 1, minWidth: 150 });
     if (isFlex || isAll) {
-      cols.push({ field: 'expand.position.name', headerName: 'Pos', maxWidth: 100, minWidth: 70 });
+      cols.push({ field: 'position', headerName: 'Pos', maxWidth: 100, minWidth: 70 });
     }
     cols.push({
       field: 'positionRank',
@@ -352,17 +362,17 @@ export default function RankingTable({ filters = {}, onFiltersChange, onDataLoad
     return cols;
   }, [isFlex, isAll, hasPrevWeek, week, isNarrow]);
 
-  const getRowId = useCallback((params) => params.data.id, []);
+  const getRowId = useCallback((params) => params.data._id, []);
 
   const getRowStyle = useCallback((params) => {
     const tier = params.data?.tier;
     if (!tier) return undefined;
     const bg = isAll
-      ? positionColor(params.data.expand?.position?.name)
+      ? positionColor(params.data.position)
       : TIER_COLORS[(tier - 1) % TIER_COLORS.length];
     return {
       backgroundColor: bg,
-      borderTop: tierStarts.has(params.data.id) ? '2px solid #1e293b' : undefined,
+      borderTop: tierStarts.has(params.data._id) ? '2px solid #1e293b' : undefined,
       // roster bar is redundant in team view, everything shown is on the team
       boxShadow: !isAll && params.data.onTeam ? 'inset 4px 0 0 #f59e0b' : undefined,
       fontWeight: params.data.onTeam ? 600 : undefined,
@@ -395,16 +405,7 @@ export default function RankingTable({ filters = {}, onFiltersChange, onDataLoad
     );
   }
 
-  if (isError) {
-    return (
-      <div className="p-8 bg-red-900/20 border border-red-500 text-red-300 rounded-lg">
-        <h3 className="font-bold text-lg mb-2">Error Fetching Data</h3>
-        <p className="font-mono bg-red-900/30 p-2 rounded">{error.message}</p>
-      </div>
-    );
-  }
-
-  if (allRankings.length === 0) {
+  if (weeksMeta.length === 0) {
     return (
       <div className="text-center p-8 bg-gray-800 rounded-lg">
         <p className="text-lg text-gray-300">No Data Found.</p>
