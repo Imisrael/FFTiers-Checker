@@ -1,6 +1,7 @@
 // ingest.js
 import PocketBase from 'pocketbase';
 import fs from 'fs/promises';
+import { BIG_BOARD_FILE } from './paths.js';
 import 'dotenv/config'
 
 // --- CONFIGURATION ---
@@ -30,9 +31,16 @@ async function main() {
         console.log('✅ Authentication successful.');
 
         // 2. Load the rankings data from the JSON file
-        console.log('Reading rankings.json file...');
-        const rankingsData = JSON.parse(await fs.readFile('../../files/big_board_tiers.json', 'utf-8'));
+        console.log('Reading big_board_tiers.json file...');
+        const rankingsData = JSON.parse(await fs.readFile(BIG_BOARD_FILE, 'utf-8'));
         console.log('✅ JSON file loaded.');
+
+        console.log('Clearing existing big board rankings...');
+        const existing = await pb.collection(BIG_BOARD_COLLECTION).getFullList();
+        for (const rec of existing) {
+            await pb.collection(BIG_BOARD_COLLECTION).delete(rec.id);
+        }
+        console.log(`Deleted ${existing.length} records.`);
 
         // 3. Cache related collections for performance
         // This is MUCH faster than querying for each player/format inside the loop.
@@ -61,6 +69,7 @@ async function main() {
             console.log(`\n--- Processing format: ${formatName} ---`);
             const scoringFormatId = scoringFormatsMap.get(formatName);
             let overallRanking = 1;
+            const posRanks = new Map();
 
             if (!scoringFormatId) {
                 console.warn(`Scoring format "${formatName}" not found in database. Skipping all its rankings.`);
@@ -87,13 +96,16 @@ async function main() {
                     // The position ID is retrieved from the expanded player record
                     // This assumes your 'players' collection has a 'position' relation field.
                     const positionId = playerRecord.position;
+                    const posRank = (posRanks.get(positionId) ?? 0) + 1;
+                    posRanks.set(positionId, posRank);
 
                     const dataToCreate = {
                         player: playerRecord.id,
                         format: scoringFormatId,
                         position: positionId,
                         tier: tierNumber,
-                        overallRanking: overallRanking
+                        overallRanking: overallRanking,
+                        positionRanking: posRank
                     };
 
                     try {
@@ -102,7 +114,7 @@ async function main() {
                         createdCount++;
                         overallRanking++;
                     } catch (createError) {
-                        console.error(`- ❌ Failed to create record for ${playerName}:`, createError.message);
+                        console.error(`- Failed: ${playerName}:`, JSON.stringify(createError.response?.data ?? createError.data));
                     }
                 }
             }

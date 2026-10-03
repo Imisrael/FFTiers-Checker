@@ -1,7 +1,9 @@
 /* eslint-disable react/react-in-jsx-scope */
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import "../styles/app.css"
+import { TIER_COLORS } from "../utils/constants.js"
+import { useTeams, togglePlayer, addTeam } from "../utils/teams.js"
 import { useQuery } from '@tanstack/react-query';
 import PocketBase from 'pocketbase';
 
@@ -9,11 +11,9 @@ import {
   ModuleRegistry,
   ValidationModule,
   ColumnAutoSizeModule,
-  PinnedRowModule,
-  PaginationModule,
-  RowDragModule,
   TextFilterModule,
   NumberFilterModule,
+  QuickFilterModule,
   ClientSideRowModelModule,
   RowStyleModule
 } from 'ag-grid-community';
@@ -21,102 +21,336 @@ import {
 ModuleRegistry.registerModules([
   ValidationModule,
   ColumnAutoSizeModule,
-  PinnedRowModule,
-  PaginationModule,
-  RowDragModule,
   TextFilterModule,
   NumberFilterModule,
+  QuickFilterModule,
   ClientSideRowModelModule,
   RowStyleModule
 ]);
 
 const pb = new PocketBase('https://fftiers.israelimru.com');
+const COLLECTION = 'weekly_rankings';
+const CURRENT_YEAR = new Date().getFullYear();
+// Order positions appear in the dropdown. Anything not listed goes at the end.
+const POSITION_ORDER = ['QB', 'RB', 'WR', 'TE', 'Flex', 'K', 'DST'];
+const FLEX = 'Flex';
+const ALL = 'All'; // team view: every position except Flex, roster only
 
+// Row backgrounds in team view (soft, one per position). Tweak to taste.
+const POSITION_COLORS = {
+  QB: '#fde68a',
+  RB: '#bfdbfe',
+  WR: '#bbf7d0',
+  TE: '#fecaca',
+  K: '#e9d5ff',
+  DST: '#e2e8f0',
+};
+const positionColor = (name) => POSITION_COLORS[name] ?? '#f1f5f9';
 
-export default function RankingTable({ type, onDataLoaded }) {
+// Tier as a small chip, used in team view where rows are colored by position
+function TierChip({ value }) {
+  if (!value) return null;
+  return (
+    <span
+      style={{
+        display: 'inline-block', minWidth: 22, textAlign: 'center',
+        fontSize: '0.75rem', fontWeight: 700, lineHeight: 1,
+        padding: '4px 6px', borderRadius: 6,
+        background: TIER_COLORS[(value - 1) % TIER_COLORS.length],
+        border: '1px solid rgba(15, 23, 42, 0.15)',
+      }}
+    >
+      {value}
+    </span>
+  );
+}
+const DEFAULT_POSITION = 'RB';
+const DEFAULT_FORMAT = 'Standard';
 
-  const [allRankings, setAllRankings] = useState([]);
-  const [selectedWeek, setSelectedWeek] = useState(1);
-  const [currentWeek, setCurrentWeek] = useState(0);
-  const [selectedFormat, setSelectedFormat] = useState("Standard");
-  const [selectedPosition, setSelectedPositon] = useState("all");
-  
-  const myTeam = ["Ja'Marr Chase","Drake London","Ladd McConkey","Davante Adams","TreVeyon Henderson","Tony Pollard","Chris Godwin Jr.","Ricky Pearsall","Rhamondre Stevenson","Jared Goff","Brenton Strange","Troy Franklin","49ers","Jeremy McNichols"];
+const selectClass = "w-full rounded-md border-slate-600 bg-slate-700 px-3 py-1.5 pr-8 text-sm font-medium text-white shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 md:w-auto appearance-none bg-no-repeat bg-right-1.5 bg-[length:1.2em_1.2em] bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24%24%22 fill=%22%239ca3af%22><path d=%22M11.9997 13.1714L16.9495 8.22168L18.3637 9.63589L11.9997 15.9999L5.63574 9.63589L7.04996 8.22168L11.9997 13.1714Z%22></path></svg>')]";
 
-  const defaultColDef = useMemo(() => ({
-    filter: true // Enable filtering on all columns
-  }))
+const posOrder = (name) => {
+  const i = POSITION_ORDER.indexOf(name);
+  return i === -1 ? POSITION_ORDER.length : i;
+};
 
+// Tier movement badge. Bigger move = bigger, bolder chip.
+function DeltaCell({ value, data }) {
+  if (data?.isNew) {
+    return (
+      <span
+        title="Not tiered last week"
+        style={{
+          fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.04em',
+          padding: '2px 7px', borderRadius: 999,
+          background: '#dbeafe', color: '#1d4ed8',
+        }}
+      >
+        NEW
+      </span>
+    );
+  }
+  if (!value) {
+    return <span style={{ color: '#94a3b8', fontSize: '0.9rem', opacity: 0.6 }}>·</span>;
+  }
 
-  const colDefs = useMemo(() => {
-    const rankingHeader = 'positionRank';
+  const up = value > 0;
+  const mag = Math.min(Math.abs(value), 3);          // 1, 2, 3+
+  const size = ['0.78rem', '0.9rem', '1.05rem'][mag - 1];
+  const weight = [600, 700, 800][mag - 1];
+  const bg = up
+    ? ['#dcfce7', '#bbf7d0', '#86efac'][mag - 1]
+    : ['#fee2e2', '#fecaca', '#fca5a5'][mag - 1];
+  const fg = up ? '#15803d' : '#b91c1c';
 
-    const columns = [
-      { field: 'tier', maxWidth: 100 },
-      {
-        field: 'expand.player.name',
-        headerName: 'Name',
-        flex: 1,
-        minWidth: 150 
-      },
-      
-      { field: rankingHeader, headerName: 'Ranking', maxWidth: 200, minWidth: 60 },
-    ];
+  return (
+    <span
+      title={`${up ? 'Up' : 'Down'} ${Math.abs(value)} tier${Math.abs(value) === 1 ? '' : 's'}`}
+      style={{
+        fontSize: size, fontWeight: weight, lineHeight: 1,
+        padding: '3px 8px', borderRadius: 999,
+        background: bg, color: fg,
+        display: 'inline-flex', alignItems: 'center', gap: 2,
+      }}
+    >
+      {up ? '▲' : '▼'}{Math.abs(value)}
+    </span>
+  );
+}
 
-    if (selectedPosition === 'all') {
-      columns.splice(2, 0, {
-        field: 'expand.position.name',
-        headerName: 'Position',
-        maxWidth: 150,
-        minWidth: 60,
-      });
-    }
-    return columns;
-  }, [type, selectedPosition]);
+// Star toggle for the team this table has selected
+function TeamCell({ data, context }) {
+  const { teamId, onNeedTeam } = context;
+  const onTeam = data?.onTeam;
+  const others = data?.otherTeams ?? [];
+  const title = onTeam
+    ? 'Remove from this team'
+    : others.length
+      ? `Add to this team (also on: ${others.join(', ')})`
+      : 'Add to this team';
+  return (
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        if (!teamId) { onNeedTeam(data.player); return; }
+        togglePlayer(teamId, data.player);
+      }}
+      title={title}
+      style={{
+        background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1,
+        fontSize: '1rem', padding: 0,
+        color: onTeam ? '#f59e0b' : others.length ? '#a16207' : '#cbd5e1',
+        opacity: onTeam || !others.length ? 1 : 0.6,
+      }}
+    >
+      {onTeam ? '★' : '☆'}
+    </button>
+  );
+}
 
-  const rowClassRules = useMemo(() => {
-    return {
-      'tier-1': (params) => params.data.tier === 1,
-      'tier-2': (params) => params.data.tier === 2,
-      'tier-3': (params) => params.data.tier === 3,
-      'tier-4': (params) => params.data.tier === 4,
-      'tier-5': (params) => params.data.tier === 5,
-      'tier-6': (params) => params.data.tier === 6,
-      'tier-7': (params) => params.data.tier === 7,
-      'tier-8': (params) => params.data.tier === 8,
-      'tier-9': (params) => params.data.tier === 9,
-    };
-  }, []);
+const pickValid = (wanted, list, fallback) => {
+  if (list.includes(wanted)) return wanted;
+  if (list.includes(fallback)) return fallback;
+  return list[0];
+};
 
-  const autoSizeStrategy = useMemo(() => {
-    return {
-      type: "fitGridWidth",
-      defaultMinWidth: 100,
-    };
-  }, []);
+/**
+ * filters: { week?, format?, position? }  (undefined = use default)
+ * onFiltersChange(patch): called when the user changes a dropdown
+ * onCompare({ week, format, position }): asks the parent to open another table with these filters
+ */
+export default function RankingTable({ filters = {}, onFiltersChange, onDataLoaded, onCompare }) {
 
-  useEffect(() => {
-    setSelectedWeek(currentWeek)
-  }, [currentWeek])
+  const [search, setSearch] = useState('');
+  const [mineOnlyState, setMineOnly] = useState(false);
+  const teams = useTeams();
+  const team = teams.find((t) => t.id === filters.team) ?? teams[0] ?? null;
+  const teamId = team?.id ?? null;
+  const rosterSet = useMemo(() => new Set(team?.players ?? []), [team]);
 
+  // Clicking a star with no team yet: create one and add the player
+  const onNeedTeam = useCallback((playerId) => {
+    const name = prompt('No team yet. Name your team:');
+    if (name === null) return;
+    const id = addTeam(name);
+    togglePlayer(id, playerId);
+    onFiltersChange?.({ team: id });
+  }, [onFiltersChange]);
 
-  const { data = [], isLoading, isError, error } = useQuery({
-    queryKey: [type],
+  const defaultColDef = useMemo(() => ({ filter: true }), []);
+
+  const { data: allRankings = [], isLoading, isError, error } = useQuery({
+    queryKey: [COLLECTION, CURRENT_YEAR],
     queryFn: async () => {
-      //	const filter = `format.name = '${format}' `;
-      //const filter = `(week = '2' && year = '2025')`;
-      const records = await pb.collection(type).getFullList({
-        //	filter: filter,
+      const records = await pb.collection(COLLECTION).getFullList({
+        filter: `year = ${CURRENT_YEAR}`,
         expand: 'player,position,format',
       });
-      setAllRankings(records);
-      const numOfRecords = records.length;
-      const currentWeek = records[numOfRecords - 1].week;
-      setCurrentWeek(currentWeek);
-      onDataLoaded(records[numOfRecords - 1].updated)
+      const latestUpdated = records.reduce(
+        (max, r) => (r.updated > max ? r.updated : max),
+        ''
+      );
+      onDataLoaded?.(latestUpdated);
       return records;
     },
   });
+
+  const availableFormats = useMemo(
+    () => [...new Set(allRankings.map((r) => r.expand?.format?.name).filter(Boolean))],
+    [allRankings]
+  );
+  const availablePositions = useMemo(
+    () => [ALL, ...[...new Set(allRankings.map((r) => r.expand?.position?.name).filter(Boolean))]
+      .sort((a, b) => posOrder(a) - posOrder(b))],
+    [allRankings]
+  );
+
+  const format = pickValid(filters.format, availableFormats, DEFAULT_FORMAT);
+  const position = pickValid(filters.position, availablePositions, DEFAULT_POSITION);
+  const isFlex = position === FLEX;
+  const isAll = position === ALL;
+
+  // Which formats each position actually has data for
+  const formatsByPosition = useMemo(() => {
+    const m = new Map();
+    for (const r of allRankings) {
+      const p = r.expand?.position?.name, f = r.expand?.format?.name;
+      if (!p || !f) continue;
+      if (!m.has(p)) m.set(p, new Set());
+      m.get(p).add(f);
+    }
+    return m;
+  }, [allRankings]);
+
+  // QB / K / DST only exist under Standard. If the chosen format has nothing for a
+  // position, fall back to whatever format it does have instead of showing an empty grid.
+  const effectiveFormatFor = useCallback(
+    (pos) => pickValid(format, [...(formatsByPosition.get(pos) ?? [])], DEFAULT_FORMAT),
+    [format, formatsByPosition]
+  );
+  const formatMatters = isAll || (formatsByPosition.get(position)?.size ?? 0) > 1;
+  const mineOnly = isAll || mineOnlyState;
+
+  // Rows for this view (any week): one position, or every non-Flex position in team view
+  const comboRecords = useMemo(
+    () => allRankings.filter((r) => {
+      const p = r.expand?.position?.name;
+      if (!p) return false;
+      if (isAll ? p === FLEX : p !== position) return false;
+      return r.expand?.format?.name === effectiveFormatFor(p);
+    }),
+    [allRankings, position, isAll, effectiveFormatFor]
+  );
+
+  // Weeks that actually have data for this combo (so a broken position shows what it really has)
+  const availableWeeks = useMemo(
+    () => [...new Set(comboRecords.map((r) => r.week))].sort((a, b) => a - b),
+    [comboRecords]
+  );
+  const week = availableWeeks.includes(filters.week)
+    ? filters.week
+    : availableWeeks[availableWeeks.length - 1];
+  const hasPrevWeek = availableWeeks.includes(week - 1);
+
+  const { rows, tierStarts } = useMemo(() => {
+    // Previous week's tier per player, for the movement column
+    const prevTier = new Map();
+    if (hasPrevWeek) {
+      for (const r of comboRecords) {
+        if (r.week === week - 1) prevTier.set(r.player, r.tier);
+      }
+    }
+
+    const filtered = comboRecords
+      .filter((r) => r.week === week)
+      .sort((a, b) =>
+        (posOrder(a.expand.position.name) - posOrder(b.expand.position.name)) ||
+        (a.tier - b.tier) ||
+        (a.positionRank - b.positionRank)
+      )
+      .map((r) => ({
+        ...r,
+        tierDelta: prevTier.has(r.player) ? prevTier.get(r.player) - r.tier : null,
+        isNew: hasPrevWeek && !prevTier.has(r.player),
+        onTeam: rosterSet.has(r.player),
+        otherTeams: teams.filter((t) => t.id !== teamId && t.players.includes(r.player)).map((t) => t.name),
+      }))
+      .filter((r) => !mineOnly || r.onTeam);
+
+    const starts = new Set();
+    let lastKey = null;
+    for (const r of filtered) {
+      const key = isAll ? r.expand.position.name : `${r.expand.position.name}:${r.tier}`;
+      if (key !== lastKey) {
+        starts.add(r.id);
+        lastKey = key;
+      }
+    }
+    return { rows: filtered, tierStarts: starts };
+  }, [comboRecords, week, hasPrevWeek, rosterSet, teams, teamId, mineOnly, isAll]);
+
+  const colDefs = useMemo(() => {
+    const cols = [
+      {
+        field: 'onTeam',
+        headerName: '',
+        maxWidth: 44,
+        minWidth: 44,
+        filter: false,
+        sortable: false,
+        resizable: false,
+        cellRenderer: TeamCell,
+        cellStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 },
+      },
+      isAll
+        ? {
+          field: 'tier', maxWidth: 90,
+          cellRenderer: TierChip,
+          cellStyle: { display: 'flex', alignItems: 'center', padding: '0 8px' },
+        }
+        : { field: 'tier', maxWidth: 90 },
+    ];
+    if (hasPrevWeek) {
+      cols.push({
+        field: 'tierDelta',
+        headerName: 'Δ',
+        headerTooltip: `Tier movement vs week ${week - 1}`,
+        maxWidth: 84,
+        minWidth: 64,
+        filter: false,
+        cellRenderer: DeltaCell,
+        cellStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 },
+      });
+    }
+    cols.push({ field: 'expand.player.name', headerName: 'Name', flex: 1, minWidth: 150 });
+    if (isFlex || isAll) {
+      cols.push({ field: 'expand.position.name', headerName: 'Pos', maxWidth: 100, minWidth: 70 });
+    }
+    cols.push({ field: 'positionRank', headerName: 'Pos Rank', maxWidth: 120, minWidth: 90 });
+    return cols;
+  }, [isFlex, isAll, hasPrevWeek, week]);
+
+  const getRowId = useCallback((params) => params.data.id, []);
+
+  const getRowStyle = useCallback((params) => {
+    const tier = params.data?.tier;
+    if (!tier) return undefined;
+    const bg = isAll
+      ? positionColor(params.data.expand?.position?.name)
+      : TIER_COLORS[(tier - 1) % TIER_COLORS.length];
+    return {
+      backgroundColor: bg,
+      borderTop: tierStarts.has(params.data.id) ? '2px solid #1e293b' : undefined,
+      // roster bar is redundant in team view, everything shown is on the team
+      boxShadow: !isAll && params.data.onTeam ? 'inset 4px 0 0 #f59e0b' : undefined,
+      fontWeight: params.data.onTeam ? 600 : undefined,
+    };
+  }, [tierStarts, isAll]);
+
+  const autoSizeStrategy = useMemo(() => ({
+    type: "fitGridWidth",
+    defaultMinWidth: 100,
+  }), []);
 
   if (isLoading) {
     return (
@@ -135,7 +369,7 @@ export default function RankingTable({ type, onDataLoaded }) {
     );
   }
 
-  if (!data || data.length === 0) {
+  if (allRankings.length === 0) {
     return (
       <div className="text-center p-8 bg-gray-800 rounded-lg">
         <p className="text-lg text-gray-300">No Data Found.</p>
@@ -143,112 +377,121 @@ export default function RankingTable({ type, onDataLoaded }) {
     );
   }
 
-  console.log(data)
-
-  const formatAgnosticPositions = ['QB', 'K', 'DST'];
-
-  let filteredRankings = allRankings.filter((ranking) => {
-    const isMatchingWeek = ranking.week === selectedWeek;
-    const isMatchingFormat = ranking.expand.format.name === selectedFormat;
-    const isAgnosticPosition = formatAgnosticPositions.includes(ranking.expand.position.name);
-    const matchesFormatLogic = isMatchingFormat || isAgnosticPosition;
-
-    const matchesPositionLogic =
-      selectedPosition === 'all' ||
-      ranking.expand.position.name === selectedPosition;
-
-    return isMatchingWeek && matchesFormatLogic && matchesPositionLogic;
-  });
-
-    let superFilter;
-    if (myTeam.length > 0) {
-        console.log(myTeam)
-        superFilter = filteredRankings.filter((ranking) => {
-            const isMatchingPlayers = myTeam.includes(ranking.expand.player.name);
-            return isMatchingPlayers;
-        })
-        console.log(superFilter);
-    }
-
-
-  const availableWeeks = [...new Set(allRankings.map((r) => r.week))].sort(
-    (a, b) => a - b
-  );
-
-  const availableFormats = [...new Set(allRankings.map((r) => r.expand.format.name))];
-  const availablePositions = [...new Set(allRankings.map((r) => r.expand.position.name))];
-
-
   return (
-    <>
-      <div className="flex flex-col items-stretch space-y-4 md:flex-row md:items-center md:space-y-0 md:space-x-6 mb-4">
-        {/* Filter Group 1: Week */}
+    <div className="flex flex-col h-full min-w-0">
+      <div className="flex flex-col items-stretch space-y-4 md:flex-row md:items-center md:space-y-0 md:space-x-4 mb-4 mt-4 flex-wrap shrink-0">
         <div className="flex items-center space-x-2">
-          <label htmlFor="week-select" className="text-sm font-medium text-gray-300">
-            Filter by Week:
-          </label>
+          <label htmlFor="week-select" className="text-sm font-medium text-gray-300">Week</label>
           <select
             id="week-select"
-            value={selectedWeek}
-            onChange={(e) => setSelectedWeek(Number(e.target.value))}
-            className="w-full rounded-md border-slate-600 bg-slate-700 px-3 py-1.5 pr-8 text-sm font-medium text-white shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 md:w-auto appearance-none bg-no-repeat bg-right-1.5 bg-[length:1.2em_1.2em] bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24%22 fill=%22%239ca3af%22><path d=%22M11.9997 13.1714L16.9495 8.22168L18.3637 9.63589L11.9997 15.9999L5.63574 9.63589L7.04996 8.22168L11.9997 13.1714Z%22></path></svg>')]"
+            value={week ?? ''}
+            onChange={(e) => onFiltersChange?.({ week: Number(e.target.value) })}
+            className={selectClass}
           >
-            {availableWeeks.map((week) => (
-              <option key={week} value={week}>
-                Week {week}
-              </option>
+            {availableWeeks.map((w) => (
+              <option key={w} value={w}>Week {w}</option>
             ))}
           </select>
         </div>
 
-        {/* Filter Group 2: Scoring Format */}
         <div className="flex items-center space-x-2">
-          <label htmlFor="format-select" className="text-sm font-medium text-gray-300">
-            Scoring Format
-          </label>
+          <label htmlFor="format-select" className="text-sm font-medium text-gray-300">Format</label>
           <select
             id="format-select"
-            value={selectedFormat}
-            onChange={(e) => setSelectedFormat(e.target.value)}
-            className="w-full rounded-md border-slate-600 bg-slate-700 px-3 py-1.5 pr-8 text-sm font-medium text-white shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 md:w-auto appearance-none bg-no-repeat bg-right-1.5 bg-[length:1.2em_1.2em] bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24%24%22 fill=%22%239ca3af%22><path d=%22M11.9997 13.1714L16.9495 8.22168L18.3637 9.63589L11.9997 15.9999L5.63574 9.63589L7.04996 8.22168L11.9997 13.1714Z%22></path></svg>')]"
+            value={format ?? ''}
+            onChange={(e) => onFiltersChange?.({ format: e.target.value })}
+            disabled={!formatMatters}
+            title={formatMatters ? undefined : `${position} tiers are the same for every format`}
+            className={`${selectClass} disabled:opacity-50 disabled:cursor-not-allowed`}
           >
-            {availableFormats.map((format) => (
-              <option key={format} value={format}>
-                {format}
-              </option>
+            {availableFormats.map((f) => (
+              <option key={f} value={f}>{f}</option>
             ))}
           </select>
         </div>
 
-        {/* Filter Group 3: Position */}
         <div className="flex items-center space-x-2">
-          <label htmlFor="position-select" className="text-sm font-medium text-gray-300">
-            Position
-          </label>
+          <label htmlFor="position-select" className="text-sm font-medium text-gray-300">Position</label>
           <select
             id="position-select"
-            value={selectedPosition}
-            onChange={(e) => setSelectedPositon(e.target.value)}
-            className="w-full rounded-md border-slate-600 bg-slate-700 px-3 py-1.5 pr-8 text-sm font-medium text-white shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 md:w-auto appearance-none bg-no-repeat bg-right-1.5 bg-[length:1.2em_1.2em] bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24%24%22 fill=%22%239ca3af%22><path d=%22M11.9997 13.1714L16.9495 8.22168L18.3637 9.63589L11.9997 15.9999L5.63574 9.63589L7.04996 8.22168L11.9997 13.1714Z%22></path></svg>')]"
+            value={position ?? ''}
+            onChange={(e) => onFiltersChange?.({ position: e.target.value })}
+            className={selectClass}
           >
-            <option key="all" value="all">
-              All
-            </option>
-            {availablePositions.map((position) => (
-              <option key={position} value={position}>
-                {position}
-              </option>
+            {availablePositions.map((p) => (
+              <option key={p} value={p}>{p}</option>
             ))}
           </select>
         </div>
+
+        <input
+          type="search"
+          placeholder="Search player"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="rounded-md border-slate-600 bg-slate-700 px-3 py-1.5 text-sm text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 md:w-44"
+        />
+
+        <div className="flex items-center space-x-2">
+          <label htmlFor="team-select" className="text-sm font-medium text-gray-300">Team</label>
+          <select
+            id="team-select"
+            value={teamId ?? ''}
+            onChange={(e) => {
+              if (e.target.value === '__new') {
+                const name = prompt('Team name?');
+                if (name !== null) onFiltersChange?.({ team: addTeam(name) });
+                return;
+              }
+              onFiltersChange?.({ team: e.target.value });
+            }}
+            className={selectClass}
+          >
+            {teams.length === 0 && <option value="">No teams</option>}
+            {teams.map((t) => (
+              <option key={t.id} value={t.id}>{t.name}</option>
+            ))}
+            <option value="__new">+ New team</option>
+          </select>
+        </div>
+
+        <button
+          onClick={() => setMineOnly((v) => !v)}
+          disabled={!team || isAll}
+          title={isAll ? 'Team view always shows only your roster' : mineOnly ? 'Show everyone' : team ? `Show only ${team.name}` : 'Pick a team first'}
+          className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-40 ${mineOnly ? 'bg-amber-500 text-slate-900 hover:bg-amber-400' : 'bg-slate-700 text-white hover:bg-slate-600'
+            }`}
+        >
+          ★ {team ? team.name : 'Mine'}{rosterSet.size ? ` (${rosterSet.size})` : ''}
+        </button>
+
+        {onCompare && (
+          <button
+            onClick={() => onCompare({ week: week - 1, format, position, team: teamId ?? undefined })}
+            disabled={!hasPrevWeek}
+            title={hasPrevWeek ? `Open week ${week - 1} next to this one` : 'No previous week for this position'}
+            className="rounded-md bg-slate-700 hover:bg-slate-600 disabled:opacity-40 disabled:hover:bg-slate-700 px-3 py-1.5 text-sm font-medium text-white transition-colors"
+          >
+            Compare wk {week - 1}
+          </button>
+        )}
       </div>
-      <AgGridReact
-        rowData={filteredRankings}
-        columnDefs={colDefs}
-        defaultColDef={defaultColDef}
-        rowClassRules={rowClassRules}
-        autoSizeStrategy={autoSizeStrategy}
-      />
-    </>
+
+      {isAll && !team && (
+        <p className="text-sm text-amber-400 mb-2">Pick or create a team to see it here.</p>
+      )}
+      <div className="flex-1 min-h-0">
+        <AgGridReact
+          rowData={rows}
+          columnDefs={colDefs}
+          defaultColDef={defaultColDef}
+          getRowId={getRowId}
+          getRowStyle={getRowStyle}
+          autoSizeStrategy={autoSizeStrategy}
+          quickFilterText={search}
+          context={{ teamId, onNeedTeam }}
+        />
+      </div>
+    </div>
   );
 }
